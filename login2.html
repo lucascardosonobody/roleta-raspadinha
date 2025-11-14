@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/config.js"></script>
+    <title>Raspadinha da Sorte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #298ff0b6 0%, #6cecf0a1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            margin-top: 40px;
+            padding: 10px;
+        }
+
+        .bandeirinhas {
+            width: 100%;
+            height: 30px;
+            background: repeating-linear-gradient(
+                90deg,
+                #FF0000 0px,
+                #FF0000 30px,
+                #FFD700 30px,
+                #FFD700 60px,
+                #FF0000 60px,
+                #FF0000 90px,
+                #FFD700 90px,
+                #FFD700 120px
+            );
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            margin: 0;
+        }
+
+        .btn-info {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            max-width: 450px;
+            width: 100%;
+            margin-top: 0;
+        }
+
+        .raspadinha-card {
+            background: white;
+            border: 5px solid #DC143C;
+            border-radius: 20px;
+            padding: 10px;
+        }
+
+        .titulo-raspe {
+            color: #DC143C;
+            font-size: 0.9em;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            margin-top: 5px;
+            letter-spacing: 1px;
+        }
+
+        .raspadinha-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            background: #FFF5F7;
+            border-radius: 15px;
+            padding: 0;
+            border: 3px solid #DC143C;
+            overflow: hidden;
+            height: 60px;
+        }
+
+        #canvasRaspadinha {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            cursor: crosshair;
+            touch-action: none;
+            display: block;
+            position: relative;
+            z-index: 10;
+        }
+
+        .premio-revelado {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1em;
+            font-weight: 900;
+            color: #000000;
+            pointer-events: none;
+            z-index: 0;
+            text-align: center;
+            line-height: 1.1;
+            width: 90%;
+            padding: 5px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.75em, 2vw, 1.1em);
+        }
+
+        .premio-revelado.texto-longo {
+            font-size: 0.85em;
+            line-height: 1;
+        }
+
+        /* BOTÕES MAIS PRÓXIMOS */
+        .botoes-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 6px; /* Reduzido de 30px para 15px */
+        }
+
+        .mensagem-erro {
+            color: #DC143C;
+            font-size: 1em;
+            font-weight: 700;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            border: 2px solid #DC143C;
+        }
+
+        @media (max-width: 768px) {
+            .premio-revelado {
+                font-size: 1em;
+            }
+
+            .btn-info {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3em;
+            }
+        }
+
+        .premio-revelado.nao-ganhou {
+            color: #999;
+            font-size: 1em;
+}
+
+    </style>
+</head>
+<body>
+    <div class="bandeirinhas"></div>
+
+    <div class="container">
+        <div class="raspadinha-card">
+            <div class="titulo-raspe">Raspe e Descubra Seu Prêmio</div>
+            
+            <div class="raspadinha-container">
+                <div class="premio-revelado" id="premioTexto"></div>
+                <canvas id="canvasRaspadinha"></canvas>
+            </div>
+        </div>
+
+        <!-- BOTÕES MAIS PRÓXIMOS -->
+        <div class="botoes-container">
+            <button class="btn-info" onclick="abrirModalComoJogar()">❗</button>
+            <button class="btn-info" onclick="abrirModalPremiacoes()">🎁</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // VALIDAÇÃO DO CONFIG.JS
+        // ============================================
+        if (typeof CONFIG === 'undefined') {
+            console.error('❌ CONFIG.js não foi carregado!');
+            alert('Erro: Sistema não configurado corretamente. Recarregue a página.');
+        } else {
+            console.log('✅ CONFIG.js carregado na raspadinha');
+        }
+
+        // ============================================
+        // VARIÁVEIS GLOBAIS
+        // ============================================
+        const canvas = document.getElementById('canvasRaspadinha');
+        const ctx = canvas.getContext('2d');
+        
+        let chancesRestantes = 5;
+        let raspando = false;
+        let percentualRaspado = 0;
+        let premioAtual = '';
+        let premios = [];
+
+        // ============================================
+        // CARREGAR PRÊMIOS DAS RASPADINHAS AGENDADAS
+        // ============================================
+        async function carregarPremiosAgendados() {
+            try {
+                console.log('🔍 Iniciando carregamento de prêmios da raspadinha...');
+                
+                // ✅ VALIDAR SE CONFIG EXISTE
+                if (typeof CONFIG === 'undefined') {
+                    throw new Error('CONFIG não está definido');
+                }
+                
+                // ✅ BUSCAR RASPADINHAS (CONFIG.fetch já retorna JSON)
+                const raspadinhas = await CONFIG.fetch(CONFIG.API.RASPADINHAS_AGENDADAS);
+                console.log('📦 Raspadinhas recebidas:', raspadinhas);
+                
+                // 🆕 Data e hora atual em São Paulo
+                const agora = new Date();
+                const agoraEmSP = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+                
+                const ano = agoraEmSP.getFullYear();
+                const mes = String(agoraEmSP.getMonth() + 1).padStart(2, '0');
+                const dia = String(agoraEmSP.getDate()).padStart(2, '0');
+                const dataHoje = `${ano}-${mes}-${dia}`; // YYYY-MM-DD
+                
+                const horaAtual = String(agoraEmSP.getHours()).padStart(2, '0') + ':' + 
+                                String(agoraEmSP.getMinutes()).padStart(2, '0'); // HH:MM
+                
+                console.log('🕐 Data atual (SP):', dataHoje);
+                console.log('🕐 Hora atual (SP):', horaAtual);
+                
+                // Filtrar raspadinhas ativas
+                const raspadinhasAtivas = raspadinhas.filter(r => {
+                    const dataCorreta = r.data_raspadinha === dataHoje;
+                    const statusCorreto = r.status === 'pendente' || r.status === 'ativo';
+                    const dentroHorario = r.hora_inicio <= horaAtual && r.hora_fim >= horaAtual;
+                    
+                    console.log(`📋 Raspadinha ${r.id}:`, {
+                        data: r.data_raspadinha,
+                        dataHoje: dataHoje,
+                        dataOK: dataCorreta,
+                        status: r.status,
+                        statusOK: statusCorreto,
+                        horario: `${r.hora_inicio} - ${r.hora_fim}`,
+                        horaAtual: horaAtual,
+                        horarioOK: dentroHorario
+                    });
+                    
+                    return dataCorreta && statusCorreto && dentroHorario;
+                });
+                
+                console.log('✅ Raspadinhas ativas encontradas:', raspadinhasAtivas.length);
+                
+                if (raspadinhasAtivas.length === 0) {
+                    premios = ['NÃO FOI DESSA VEZ'];
+                    mostrarMensagemErro('⏳ Nenhuma raspadinha ativa no momento');
+                    inicializarCanvas();
+                    return;
+                }
+                
+                // 🆕 PROCESSAR TODOS OS PRÊMIOS DE TODAS AS RASPADINHAS ATIVAS
+                let todosPremios = [];
+                
+                raspadinhasAtivas.forEach(raspadinha => {
+                    console.log('🎯 Processando raspadinha:', raspadinha.id);
+                    
+                    let premiosDistribuicao = [];
+                    
+                    try {
+                        // Parse dos prêmios
+                        if (typeof raspadinha.premios_distribuicao === 'string') {
+                            premiosDistribuicao = JSON.parse(raspadinha.premios_distribuicao);
+                        } else if (Array.isArray(raspadinha.premios_distribuicao)) {
+                            premiosDistribuicao = raspadinha.premios_distribuicao;
+                        }
+                        
+                        console.log('  📦 Total de prêmios na raspadinha:', premiosDistribuicao.length);
+                        console.log('  📋 Prêmios:', premiosDistribuicao);
+                    } catch (e) {
+                        console.error('  ❌ Erro ao fazer parse dos prêmios:', e);
+                        return;
+                    }
+                    
+                    // Filtrar prêmios por horário
+                    const premiosAtivos = premiosDistribuicao.filter(p => {
+                        if (!p.horario_inicio || !p.horario_fim) {
+                            console.log(`  ⚠️ Prêmio sem horário: ${p.premio_nome}`);
+                            return false;
+                        }
+                        
+                        const dentroHorario = p.horario_inicio <= horaAtual && p.horario_fim >= horaAtual;
+                        
+                        console.log(`  ⏰ ${p.premio_nome}:`, {
+                            inicio: p.horario_inicio,
+                            fim: p.horario_fim,
+                            horaAtual: horaAtual,
+                            ativo: dentroHorario
+                        });
+                        
+                        return dentroHorario;
+                    });
+                    
+                    console.log('  ✅ Prêmios ativos nesta raspadinha:', premiosAtivos.length);
+                    
+                    // Adicionar prêmios ao array
+                    premiosAtivos.forEach(p => {
+                        todosPremios.push(p.premio_nome);
+                    });
+                });
+                
+                console.log('🎁 TOTAL DE PRÊMIOS CARREGADOS:', todosPremios.length);
+                console.log('📋 Lista completa de prêmios:', todosPremios);
+                
+                if (todosPremios.length === 0) {
+                    premios = ['NÃO FOI DESSA VEZ'];
+                    mostrarMensagemErro('⏰ Nenhum prêmio disponível neste horário');
+                } else {
+                    premios = todosPremios;
+                    
+                    // Remover mensagem de erro se houver
+                    const msgErro = document.querySelector('.mensagem-erro');
+                    if (msgErro) {
+                        msgErro.remove();
+                    }
+                }
+                
+                inicializarCanvas();
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar raspadinhas:', error);
+                premios = ['ERRO AO CARREGAR'];
+                mostrarMensagemErro('❌ Erro ao carregar raspadinha. Tente novamente.');
+                inicializarCanvas();
+            }
+        }
+
+        function mostrarMensagemErro(mensagem) {
+            const container = document.querySelector('.container');
+            let msgErro = document.querySelector('.mensagem-erro');
+            
+            if (!msgErro) {
+                msgErro = document.createElement('div');
+                msgErro.className = 'mensagem-erro';
+                container.insertBefore(msgErro, container.firstChild);
+            }
+            
+            msgErro.textContent = mensagem;
+        }
+
+        // ============================================
+        // CONFIGURAR CANVAS
+        // ============================================
+        function inicializarCanvas() {
+            const container = canvas.parentElement;
+            const width = container.clientWidth;
+            const height = 60;
+            
+            canvas.width = width;
+            canvas.height = height;
+
+            sortearPremio();
+            desenharCamadaCinza();
+        }
+
+        // ============================================
+        // SORTEAR PRÊMIO
+        // ============================================
+        function sortearPremio() {
+            if (premios.length === 0) {
+                premioAtual = 'ERRO';
+                return;
+            }
+            
+            // 50% de chance de ganhar o prêmio, 50% de não ganhar nada
+            const ganhou = Math.random() < 0.5;
+            
+            if (ganhou) {
+                const indiceAleatorio = Math.floor(Math.random() * premios.length);
+                premioAtual = premios[indiceAleatorio];
+            } else {
+                premioAtual = 'NÃO FOI DESSA VEZ';
+            }
+            
+            const textoDiv = document.getElementById('premioTexto');
+            textoDiv.innerHTML = premioAtual.replace(/\n/g, '<br>');
+            
+            // Adicionar classe CSS se não ganhou
+            if (premioAtual === 'NÃO FOI DESSA VEZ') {
+                textoDiv.classList.add('nao-ganhou');
+            } else {
+                textoDiv.classList.remove('nao-ganhou');
+            }
+        }
+
+
+        // ============================================
+        // DESENHAR CAMADA CINZA
+        // ============================================
+        function desenharCamadaCinza() {
+            ctx.globalCompositeOperation = 'source-over';
+            
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#b17d0d');
+            gradient.addColorStop(0.5, '#d4af37');
+            gradient.addColorStop(1, '#b17d0d');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'center';
+
+            ctx.font = `bold 24px Arial`;
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(chancesRestantes, canvas.width / 2, canvas.height / 2 + 2);
+
+            ctx.font = `bold 16px Arial`;
+            ctx.textBaseline = 'top';
+            ctx.fillText('CHANCES', canvas.width / 2, canvas.height / 2 + 2);
+        }
+
+        // ============================================
+        // EVENTOS DE RASPAGEM
+        // ============================================
+        canvas.addEventListener('mousedown', iniciarRaspagem);
+        canvas.addEventListener('mousemove', raspar);
+        canvas.addEventListener('mouseup', pararRaspagem);
+        canvas.addEventListener('mouseleave', pararRaspagem);
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            iniciarRaspagem(e);
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            raspar(e);
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            pararRaspagem(e);
+        });
+
+        function iniciarRaspagem(e) {
+            if (chancesRestantes === 0) return;
+            raspando = true;
+        }
+
+        function pararRaspagem(e) {
+            raspando = false;
+        }
+
+        function raspar(e) {
+            if (!raspando || chancesRestantes === 0) return;
+
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
+
+            if (e.type.startsWith('touch')) {
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else {
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
+            }
+
+            x = x * (canvas.width / rect.width);
+            y = y * (canvas.height / rect.height);
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            verificarPercentualRaspado();
+        }
+
+        function verificarPercentualRaspado() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            let pixelsTransparentes = 0;
+
+            for (let i = 3; i < pixels.length; i += 4) {
+                if (pixels[i] < 128) {
+                    pixelsTransparentes++;
+                }
+            }
+
+            percentualRaspado = (pixelsTransparentes / (pixels.length / 4)) * 100;
+
+            if (percentualRaspado > 30) {
+                revelarCompleto();
+            }
+        }
+
+        function revelarCompleto() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            raspando = false;
+            
+            chancesRestantes--;
+
+            setTimeout(() => {
+                // 🆕 BUSCAR DADOS DO LOCALSTORAGE
+                const participanteNome = localStorage.getItem('participante_nome');
+                const participanteEmail = localStorage.getItem('participante_email');
+                const participanteWhatsapp = localStorage.getItem('participante_whatsapp');
+                
+                console.log('📋 Dados do participante no revelar:', {
+                    nome: participanteNome,
+                    email: participanteEmail,
+                    whatsapp: participanteWhatsapp,
+                    premio: premioAtual
+                });
+                
+                // 🎉 ENVIAR PRÊMIO PARA O PAI (final.html)
+                window.parent.postMessage({
+                    action: 'premioGanho',
+                    premio: premioAtual,
+                    chancesRestantes: chancesRestantes,
+                    participante: {
+                        nome: participanteNome || 'Anônimo',
+                        email: participanteEmail || 'sem-email@exemplo.com',
+                        whatsapp: participanteWhatsapp || 'Sem WhatsApp'
+                    }
+                }, '*');
+                
+                if (chancesRestantes > 0) {
+                    ctx.globalCompositeOperation = 'source-over';
+                    sortearPremio();
+                    desenharCamadaCinza();
+                    percentualRaspado = 0;
+                } else {
+                    // 💔 ENVIAR MENSAGEM DE CHANCES ACABARAM
+                    canvas.style.cursor = 'not-allowed';
+                    window.parent.postMessage({
+                        action: 'chancesAcabaram'
+                    }, '*');
+                }
+            }, 500);
+        }
+
+        // ============================================
+        // FUNÇÕES DOS BOTÕES
+        // ============================================
+        function abrirModalComoJogar() {
+            window.parent.postMessage({ action: 'abrirComoJogar' }, '*');
+        }
+
+        function abrirModalPremiacoes() {
+            window.parent.postMessage({ action: 'abrirModalMeusPremios' }, '*');
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        window.addEventListener('resize', inicializarCanvas);
+        
+        // Carregar prêmios ao iniciar
+        carregarPremiosAgendados();
+        
+        // Recarregar prêmios a cada 30 segundos
+        setInterval(carregarPremiosAgendados, 30000);
+
+        // ============================================
+        // LISTENER ÚNICO PARA TODAS AS MENSAGENS
+        // ============================================
+        window.addEventListener('message', function(event) {
+            const msg = event.data;
+            
+            // 🆕 RECEBER DADOS DO PARTICIPANTE
+            if (msg.action === 'iniciarComDados' && msg.data) {
+                console.log('📥 Recebendo dados do participante:', msg.data);
+                
+                localStorage.setItem('participante_nome', msg.data.nome);
+                localStorage.setItem('participante_email', msg.data.email);
+                localStorage.setItem('participante_whatsapp', msg.data.whatsapp);
+                
+                console.log('✅ Dados salvos no localStorage da raspadinha');
+            }
+            
+            // 🎁 ADICIONAR CHANCES
+            if (msg.action === 'adicionarChances') {
+                chancesRestantes += msg.quantidade;
+                console.log(`✅ +${msg.quantidade} chances adicionadas! Total: ${chancesRestantes}`);
+                desenharCamadaCinza();
+            }
+        });
+
+    </script>
+    <script src="/config.js"></script>
+</body>
+</html>

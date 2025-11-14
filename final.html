@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspadinha da Beleza - Sistema Completo</title>
+    <script src="/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+<style>
+    :root{
+        --cor-principal:#1a233e;
+        --cor-secundaria:#e8e8e8;
+        --cor-fundo:#f9f7f4;
+        --cor-acento:#e4e00b;
+        --cor-vermelho:#d32f2f;
+        --cor-verde:#4caf50;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    
+    body, html {
+        height: 100%;
+        width: 100%;
+        font-family:'Montserrat',sans-serif;
+        overflow-x: hidden;
+    }
+    body.modal-open { overflow-y: hidden; } 
+
+    .main-container { min-height: 100vh; width: 100%; position: relative; display: flex; flex-direction: column; }
+
+    .hidden{display:none!important;}
+    
+    /* Formulário de cadastro */
+    #form-section {
+        position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg,#ffffff 0%,#f0f0f0 100%); padding: 20px; transition: opacity 0.5s ease-in-out, visibility 0.5s;
+    }
+    .form-box{
+        width:100%; max-width:500px; background:#fff; border-radius:20px; padding:40px; box-shadow:0 10px 40px rgba(0,0,0,0.15);
+        text-align:center;
+    }
+    .login-logo{ width:170px; height:170px; object-fit:contain; margin:0 auto 14px; display:block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.15)); }
+    .form-box h1{ color:var(--cor-principal); font-size:2em; margin-bottom:24px; text-align:center; }
+    .form-group{ margin-bottom:18px; text-align:left; }
+    .form-group label{ display:block; color:var(--cor-principal); font-weight:600; margin-bottom:8px; }
+    .form-group input{
+        width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1em; transition:border 0.3s;
+    }
+    .form-group input:focus{ outline:none; border-color:var(--cor-acento); }
+    .form-group input.erro{ border-color:#f44336; }
+    .mensagem-erro{ color:#f44336; font-size:0.9em; margin-top:5px; display:none; }
+    .mensagem-erro.ativo{ display:block; }
+    .btn-submit{
+        width:100%; padding:15px; background:var(--cor-acento); color:var(--cor-principal);
+        border:none; border-radius:10px; font-size:1.2em; font-weight:700; cursor:pointer;
+        transition:transform 0.2s; box-shadow:0 4px 0 #8a7631; margin-top:8px;
+    }
+    .btn-submit:hover{ transform:translateY(-2px); }
+    .btn-submit:active{ transform:translateY(2px); box-shadow:0 2px 0 #8a7631; }
+    #form-section.hidden-form { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    /* Iframes do jogo */
+    #game-wrapper { 
+        width: 100%; 
+        height: 100vh; 
+        display: flex; 
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    #iframe-roleta { 
+        width: 100%; 
+        height: 70vh;
+        border: none; 
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    #iframe-raspadinha { 
+        width: 100%; 
+        height: 25vh;
+        border: none; 
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    /* Loading overlay */
+    #loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.9);
+        z-index: 10001;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    
+    #loading-overlay h2 {
+        color: var(--cor-principal);
+        margin-bottom: 20px;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--cor-acento);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Modais */
+    .modal{
+        display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index: 9990; align-items:center; justify-content:center;
+        animation: fadeIn 0.3s ease-in-out; overflow-y: auto; padding: 20px;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal.active{display:flex;}
+
+    .modal-content{
+        background:#fff; padding:40px; border-radius:20px; max-width:500px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.6);
+        border:3px solid var(--cor-acento); animation: slideUp 0.3s ease-in-out; max-height: 90vh; overflow-y: auto; 
+    }
+    @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-content h2{ color:var(--cor-acento); font-size:2.2em; margin-bottom:20px; }
+    .modal-content p{ font-size:1.3em; color:var(--cor-principal); margin-bottom:30px; line-height:1.6; }
+    .btn-fechar{
+        padding:12px 30px; background:var(--cor-acento); color:var(--cor-principal);
+        border:none; border-radius:50px; font-size:0.9em; font-weight:700; cursor:pointer; box-shadow:0 4px 0 #8a7631; margin: 5px;
+    }
+    .btn-fechar:active{transform:translateY(2px);box-shadow:0 2px 0 #8a7631;}
+
+    .btn-modal{
+        padding:15px 35px; background:var(--cor-acento); color:var(--cor-principal);
+        border:none; border-radius:50px; font-size:1.1em; font-weight:700; cursor:pointer; 
+        box-shadow:0 4px 0 #8a7631; margin: 10px 5px; transition: all 0.3s; display: inline-block;
+        min-width: 200px;
+    }
+    .btn-modal:hover{ transform:translateY(-2px); box-shadow:0 6px 0 #8a7631; }
+    .btn-modal:active{transform:translateY(2px);box-shadow:0 2px 0 #8a7631;}
+    
+    .btn-modal.verde{ background:#4caf50; box-shadow:0 4px 0 #2e7d32; }
+    .btn-modal.verde:hover{ box-shadow:0 6px 0 #2e7d32; }
+    .btn-modal.verde:active{ box-shadow:0 2px 0 #2e7d32; }
+    
+    .btn-modal.laranja{ background:#ff9800; box-shadow:0 4px 0 #e65100; color: white; }
+    .btn-modal.laranja:hover{ box-shadow:0 6px 0 #e65100; }
+    .btn-modal.laranja:active{ box-shadow:0 2px 0 #e65100; }
+    
+    .btn-modal.cinza{ background:#9e9e9e; box-shadow:0 4px 0 #616161; color: white; }
+    .btn-modal.cinza:hover{ box-shadow:0 6px 0 #616161; }
+    .btn-modal.cinza:active{ box-shadow:0 2px 0 #616161; }
+
+    .opcao-box {
+        background: #f5f5f5; 
+        padding: 25px; 
+        border-radius: 15px; 
+        margin: 15px 0; 
+        text-align: left;
+        border: 2px solid #ddd;
+        transition: all 0.3s;
+    }
+    .opcao-box:hover {
+        border-color: var(--cor-acento);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .opcao-box h3 {
+        margin-bottom: 15px;
+        font-size: 1.4em;
+    }
+
+    .form-indicacao {
+        margin-bottom: 20px;
+        text-align: left;
+        background: #fafafa;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    .form-indicacao h4 {
+        background: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    .form-group-modal {
+        margin-bottom: 15px;
+    }
+    .form-group-modal label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-group-modal input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1em;
+    }
+    .form-group-modal input.erro {
+        border-color: #f44336;
+        background: #ffebee;
+    }
+
+    @media (max-width: 768px) {
+        .form-box { padding: 20px; }
+        .form-box h1 { font-size: 1.5em; }
+        
+        #iframe-roleta {
+            height: 65vh;
+        }
+        
+        #iframe-raspadinha {
+            height: 35vh;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #iframe-roleta {
+            height: 60vh;
+        }
+        
+        #iframe-raspadinha {
+            height: 40vh;
+        }
+    }
+
+    /* ============================================
+    MODAL DE PRÊMIO GANHO DA RASPADINHA
+    ============================================ */
+    .modal-premio-ganho {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10005;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal-premio-ganho.active {
+        display: flex;
+    }
+
+    .modal-premio-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        animation: modalAppear 0.3s ease-out;
+        border: 5px solid #fff;
+    }
+
+    @keyframes modalAppear {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .modal-premio-content h2 {
+        color: #fff;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .modal-premio-nome {
+    background: white;
+    color: #667eea;
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 1.8em;
+    font-weight: 900;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+    .modal-premio-info {
+        color: #fff;
+        font-size: 1.2em;
+        margin-bottom: 30px;
+        font-weight: 600;
+    }
+
+    .modal-premio-btn {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 30px;
+        font-size: 1.2em;
+        font-weight: 900;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-premio-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ============================================
+    MODAL CHANCES ACABARAM DA RASPADINHA
+    ============================================ */
+    .modal-chances-acabaram-raspadinha {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10002;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal-chances-acabaram-raspadinha.active {
+        display: flex;
+    }
+
+    .modal-chances-content-raspadinha {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        padding: 25px;  /* 👈 Era 40px */
+        border-radius: 15px;  /* 👈 Era 20px */
+        max-width: 400px;  /* 👈 Era 500px */
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        animation: modalAppear 0.3s ease-out;
+        border: 3px solid #fff;  /* 👈 Era 5px */
+    }
+
+    .modal-chances-content-raspadinha h2 {
+        color: #fff;
+        font-size: 1.6em;  /* 👈 Era 2.2em */
+        margin-bottom: 15px;  /* 👈 Era 20px */
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .modal-chances-texto-raspadinha {
+        background: white;
+        color: #e74c3c;
+        padding: 15px;  /* 👈 Era 20px */
+        border-radius: 10px;  /* 👈 Era 15px */
+        font-size: 1em;  /* 👈 Era 1.2em */
+        font-weight: 600;  /* 👈 Era 700 */
+        margin-bottom: 20px;  /* 👈 Era 30px */
+        line-height: 1.5;  /* 👈 Era 1.6 */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-chances-btns-raspadinha {
+        display: flex;
+        gap: 10px;  /* 👈 Era 15px */
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .modal-chances-btn-raspadinha {
+        background: white;
+        color: #e74c3c;
+        border: none;
+        padding: 12px 25px;  /* 👈 Era 15px 30px */
+        border-radius: 25px;  /* 👈 Era 30px */
+        font-size: 0.95em;  /* 👈 Era 1.1em */
+        font-weight: 800;  /* 👈 Era 900 */
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-chances-btn-raspadinha:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Responsivo para celular - Modal chances acabaram */
+    @media (max-width: 768px) {
+        .modal-chances-content-raspadinha {
+            max-width: 95%;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-chances-content-raspadinha h2 {
+            font-size: 1.4em;
+        }
+        
+        .modal-chances-texto-raspadinha {
+            font-size: 0.9em;
+            padding: 12px;
+        }
+        
+        .modal-chances-btn-raspadinha {
+            font-size: 0.85em;
+            padding: 10px 20px;
+        }
+        
+        .btn-modal.verde,
+        .btn-modal.laranja {
+            min-width: 140px;
+            font-size: 0.9em;
+            padding: 10px 20px;
+        }
+    }
+
+    /* Responsivo para textos longos no mobile */
+    @media (max-width: 768px) {
+        .modal-premio-nome {
+            font-size: clamp(1em, 4vw, 1.5em);
+            padding: 15px;
+            min-height: 70px;
+        }
+        
+        .modal-premio-content {
+            padding: 30px 20px;
+            max-width: 90%;
+        }
+    }
+
+    /* Responsividade do Modal de Premiações */
+    @media (max-width: 768px) {
+        #modal-premiacoes .modal-content {
+            padding: 25px 15px;
+            max-width: 95%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        #modal-premiacoes .modal-content h2 {
+            font-size: 1.6em;
+            margin-bottom: 15px;
+        }
+        
+        #modal-premiacoes .modal-content h3 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        
+        #modal-premiacoes .modal-content h4 {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        
+        #modal-premiacoes .modal-content p {
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        /* Prêmios individuais */
+        #modal-premiacoes [style*="background: linear-gradient"] {
+            padding: 15px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        #modal-premiacoes [style*="background: linear-gradient"] h4 {
+            font-size: 1.2em !important;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        #modal-premiacoes [style*="background: linear-gradient"] p {
+            font-size: 0.85em !important;
+        }
+        
+        /* Box de bônus da roleta */
+        #modal-premiacoes [style*="background: #f5f5f5"] {
+            padding: 15px !important;
+            margin-top: 20px !important;
+        }
+        
+        #modal-premiacoes [style*="background: #f5f5f5"] p {
+            font-size: 0.95em !important;
+        }
+        
+        /* Mensagens de erro/aviso */
+        #modal-premiacoes [style*="background: #fff3e0"],
+        #modal-premiacoes [style*="background: #ffebee"] {
+            padding: 15px !important;
+            margin: 15px 0 !important;
+        }
+        
+        #modal-premiacoes [style*="background: #fff3e0"] p,
+        #modal-premiacoes [style*="background: #ffebee"] p {
+            font-size: 0.95em !important;
+        }
+    }
+
+    /* Para telas muito pequenas (celulares menores) */
+    @media (max-width: 480px) {
+        #modal-premiacoes .modal-content {
+            padding: 20px 12px;
+            max-width: 98%;
+        }
+        
+        #modal-premiacoes .modal-content h2 {
+            font-size: 1.4em;
+        }
+        
+        #modal-premiacoes .modal-content h3 {
+            font-size: 1.1em;
+        }
+        
+        #modal-premiacoes .modal-content h4 {
+            font-size: 1em;
+        }
+        
+        #modal-premiacoes [style*="background: linear-gradient"] {
+            padding: 12px !important;
+        }
+        
+        #modal-premiacoes [style*="background: linear-gradient"] h4 {
+            font-size: 1.1em !important;
+        }
+        
+        #modal-premiacoes [style*="background: linear-gradient"] p {
+            font-size: 0.8em !important;
+        }
+    }
+
+
+</style>
+</head>
+<body>
+
+    <div class="main-container">
+
+        <!-- Loading -->
+        <div id="loading-overlay" class="hidden">
+            <h2>Processando seu cadastro...</h2>
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Área do Jogo (escondida inicialmente) -->
+        <div id="game-wrapper" class="hidden">
+            <iframe id="iframe-roleta" src="testeroleta.html" title="Roleta de Prêmios"></iframe>
+            <iframe id="iframe-raspadinha" src="login2.html" title="Jogo da Raspadinha"></iframe>
+        </div>
+        
+        <!-- Formulário de Cadastro -->
+        <div id="form-section">
+            <div class="form-box">
+                <img src="unisense logo.png" alt="Unisense" class="login-logo">
+                <h1>Cadastro Raspadinha da Beleza</h1>
+                <div class="form-group">
+                    <label>Nome Completo:</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome completo">
+                    <div class="mensagem-erro" id="erro-nome">Por favor, preencha seu nome completo</div>
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp:</label>
+                    <input type="tel" id="whatsapp" placeholder="(11) 00000-0000" maxlength="15">
+                    <div class="mensagem-erro" id="erro-whatsapp">Por favor, preencha seu WhatsApp</div>
+                </div>
+                <div class="form-group">
+                    <label>E-mail:</label>
+                    <input type="email" id="email" placeholder="seu@email.com">
+                    <div class="mensagem-erro" id="erro-email">Por favor, preencha um e-mail válido</div>
+                </div>
+                <button class="btn-submit" onclick="iniciarRaspadinha()">COMEÇAR A JOGAR</button>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Modal de Resultado -->
+    <div class="modal" id="modal-resultado">
+        <div class="modal-content">
+            <h2 id="modal-titulo"></h2>
+            <p id="modal-texto"></p>
+            <div id="modal-html-custom"></div>
+            <button class="btn-fechar" onclick="fecharModal('modal-resultado')">CONTINUAR</button>
+        </div>
+    </div>
+
+    <!-- Modal Universal -->
+    <div class="modal" id="modal-universal">
+        <div class="modal-content" id="modal-universal-content">
+            <!-- Conteúdo dinâmico será inserido aqui -->
+        </div>
+    </div>
+
+    <!-- Modal de Chances Acabaram -->
+    <div class="modal" id="modal-chances-acabaram">
+        <div class="modal-content">
+            <h2 style="color: #DC143C;">😢 Suas chances acabaram!</h2>
+            <p style="font-size: 1.1em; margin-bottom: 30px;">
+                Mas não fique triste! Você pode ganhar <strong style="color: #4caf50;">MAIS CHANCES</strong> de duas formas:
+            </p>
+            
+            <div class="opcao-box" style="background: #e8f5e9; border-color: #4caf50;">
+                <h3 style="color: #4caf50;">🌟 OPÇÃO 1: Indique Amigos</h3>
+                <p style="margin-bottom: 15px;">Compartilhe a diversão! Cada amigo indicado = <strong>+1 chance</strong>!</p>
+                <button class="btn-modal verde" onclick="abrirModalIndicacao()">
+                    👥 INDICAR AMIGOS
+                </button>
+            </div>
+            
+            <div class="opcao-box" style="background: #fff3e0; border-color: #ff9800;">
+                <h3 style="color: #ff9800;">⭐ OPÇÃO 2: Avalie no Google</h3>
+                <p style="margin-bottom: 15px;">Deixe sua avaliação e ganhe <strong>+2 chances</strong> extras!</p>
+                <button class="btn-modal laranja" onclick="avaliarGooglePrincipal()">
+                    ⭐ AVALIAR NO GOOGLE
+                </button>
+            </div>
+            
+            <button class="btn-modal cinza" onclick="fecharModal('modal-chances-acabaram')">
+                FECHAR
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Indicação -->
+    <div class="modal" id="modal-indicacao">
+        <div class="modal-content">
+            <h2 style="color: #4caf50;">👥 Indicar Amigos</h2>
+            <p style="margin-bottom: 20px;">Preencha os dados dos seus amigos. <br><strong>Cada amigo = +1 chance!</strong></p>
+            
+            <div id="formularios-indicacao" style="max-height: 400px; overflow-y: auto;">
+                <div class="form-indicacao" data-index="0">
+                    <h4>Amigo #1</h4>
+                    <div class="form-group-modal">
+                        <label>Nome:</label>
+                        <input type="text" class="input-nome-indicado" placeholder="Nome completo">
+                    </div>
+                    <div class="form-group-modal">
+                        <label>WhatsApp:</label>
+                        <input type="tel" class="input-whatsapp-indicado" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric">
+                    </div>
+                    <div class="form-group-modal">
+                        <label>E-mail:</label>
+                        <input type="email" class="input-email-indicado" placeholder="Não é obrigatório">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-modal verde" onclick="enviarIndicacoesPrincipal()">
+                ✅ ENVIAR INDICAÇÕES
+            </button>
+            
+            <button class="btn-modal cinza" onclick="fecharModal('modal-indicacao')">
+                CANCELAR
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Ajuda -->
+    <div class="modal" id="modal-ajuda">
+        <div class="modal-content">
+            <h2 style="color: #4caf50;">ℹ️ COMO FUNCIONA</h2>
+            
+            <div style="text-align: left; margin: 20px 0;">
+                <h3 style="color: #DC143C; margin-top: 20px;">🎡 ROLETA DA SORTE</h3>
+                <p>Assim que você faz o login, você já está participando automaticamente! A roleta começa a girar sozinha quando houver um número suficiente de participantes.</p>
+                <p style="margin-top: 10px;"><strong>💡 Dica:</strong> Olhe para o centro da roleta para ver quantos participantes já estão concorrendo!</p>
+                
+                <h3 style="color: #DC143C; margin-top: 20px;">🎫 RASPADINHA</h3>
+                <p>Ao fazer login, você ganha <strong>5 chances</strong> para raspar e descobrir prêmios incríveis:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>💅 Manicure (pé ou mão)</li>
+                    <li>💰 R$ 150 em desconto no Lazer CO2</li>
+                </ul>
+                
+                <h3 style="color: #4caf50; margin-top: 20px;">✨ GANHE MAIS CHANCES!</h3>
+                <p>Acabaram suas chances? Não se preocupe!</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>👥 INDICAR AMIGOS:</strong> Cada amigo indicado = +1 chance extra!</li>
+                    <li><strong>⭐ AVALIAR NO GOOGLE:</strong> Deixe sua avaliação = +2 chances extras!</li>
+                </ul>
+                
+                <p style="text-align: center; margin-top: 20px; font-size: 1.2em;">🍀 Boa sorte! 🍀</p>
+            </div>
+            
+            <button class="btn-fechar" onclick="fecharModal('modal-ajuda')">FECHAR</button>
+        </div>
+    </div>
+
+        <!-- Modal de Prêmios -->
+    <div class="modal" id="modal-premios">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+            <h2 style="color: #DC143C;">🎁 MEUS PRÊMIOS</h2>
+            
+            <div style="text-align: left; margin: 20px 0;">
+                
+                <!-- 1️⃣ PRÊMIOS QUE EU GANHEI -->
+                <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.3em;">🏆 Prêmios que Ganhei</h3>
+                    <div id="lista-meus-premios" style="background: white; padding: 15px; border-radius: 10px; min-height: 50px;">
+                        <!-- Será preenchido dinamicamente -->
+                    </div>
+                </div>
+                
+                <!-- 2️⃣ PRÊMIOS DISPONÍVEIS -->
+                <div style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.3em;">🎯 Prêmios Disponíveis</h3>
+                    <div id="lista-premios-disponiveis" style="background: white; padding: 15px; border-radius: 10px; min-height: 50px;">
+                        <!-- Será preenchido dinamicamente -->
+                    </div>
+                </div>
+                
+                <!-- 3️⃣ PRÊMIOS QUE OUTROS GANHARAM -->
+                <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.3em;">👥 Últimos Ganhadores</h3>
+                    <div id="lista-outros-ganhadores" style="background: white; padding: 15px; border-radius: 10px; min-height: 50px;">
+                        <!-- Será preenchido dinamicamente -->
+                    </div>
+                </div>
+                
+            </div>
+            
+            <button class="btn-fechar" onclick="fecharModal('modal-premios')">FECHAR</button>
+        </div>
+    </div>
+
+    <!-- Modal de Boas-Vindas / Regras (aparece automaticamente) -->
+    <div class="modal" id="modal-boas-vindas">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+            <h2 style="color: #4caf50; font-size: 1.5em;">BEM-VINDO!</h2>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <p style="font-size: 1.2em; color: #333; margin-bottom: 30px;">
+                    Você está participando de <strong style="color: #DC143C;">2 JOGOS</strong> ao mesmo tempo!
+                </p>
+            </div>
+            
+            <div style="text-align: left; margin: 20px 0; line-height: 1.8;">
+                
+                <!-- SEÇÃO ROLETA -->
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.4em;">🎡 ROLETA DA SORTE</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #667eea;"> Você JÁ está participando</strong><br>
+                            <div style=" font-size: 0.9em">Não precisa fazer nada, apenas aguardar o sorteio.</div>
+                        </p>
+                        
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #667eea;;"> Como funciona:</strong><br>
+                           <div style=" font-size: 0.9em"> A roleta gira automaticamente quando atingir o número necessário de participantes. </div>
+                        </p>
+                        
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #667eea;"> Se ganhar:</strong><br>
+                           <div style=" font-size: 0.9em"> Você será notificado por WhatsApp e E-mail! </div>
+                        </p>
+                        
+                        <p style="margin: 0; color: #333;">
+                            <strong style="color: #667eea;"> Acompanhe:</strong><br>
+                           <div style=" font-size: 0.9em"> Veja os prêmios disponíveis no canto esquerdo da tela.</div>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- SEÇÃO RASPADINHA -->
+                <div style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.4em;">🎫 RASPADINHA</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #4caf50;"> Você ganhou 5 chances!</strong><br>
+                          <div style=" font-size: 0.9em">  Raspe para descobrir prêmios incríveis.</div>
+                        </p>
+                        
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #4caf50;"> Como raspar:</strong><br>
+                          <div style=" font-size: 0.9em">  Clique em "RASPAR" e arraste o dedo sobre a área dourada.</div>
+                        </p>
+                        
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #4caf50;"> Ver prêmios:</strong><br>
+                          <div style=" font-size: 0.9em">  Clique no ícone de presente (🎁) no canto superior direito.</div>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- SEÇÃO GANHAR MAIS CHANCES -->
+                <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 1.4em;">✨ GANHE MAIS CHANCES</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px;">
+                        <p style="margin-bottom: 10px; color: #333;">
+                            <strong style="color: #ff9800;">👥 Indique Amigos:</strong><br>
+                           <div style=" font-size: 0.9em"> Cada amigo indicado = <strong>+1 chance</strong> extra! </div>
+                        </p>
+                        
+                        <p style="margin: 0; color: #333;">
+                            <strong style="color: #ff9800;">⭐ Avalie no Google:</strong><br>
+                           <div style=" font-size: 0.9em"> Deixe sua avaliação = <strong>+2 chances</strong> extras! </div>
+                        </p>
+                    </div>
+                </div>
+                
+                <p style="text-align: center; margin-top: 30px; font-size: 1.4em; font-weight: bold; color: #4caf50; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                     BOA SORTE! 
+                </p>
+            </div>
+            
+            <button class="btn-modal verde" onclick="fecharModalBoasVindas()" style="font-size: 1.3em; padding: 18px 40px;">
+                 COMEÇAR A JOGAR!
+            </button>
+        </div>
+    </div>
+
+        <!-- Modal Como Jogar (❗) -->
+        <!-- Modal Como Jogar (❗) -->
+    <div class="modal" id="modal-como-jogar">
+        <div class="modal-content">
+            <h2 style="color: #DC143C;">❗ COMO JOGAR</h2>
+            
+            <div style="text-align: left; margin: 20px 0; line-height: 1.8; max-height: 500px; overflow-y: auto;">
+                
+                <!-- SEÇÃO ROLETA -->
+                <h3 style="color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid #667eea;">🎡 ROLETA DA SORTE</h3>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>🎯 Como Participar:</strong><br>
+                    Ao fazer o login, você <strong>automaticamente</strong> já está participando! Não precisa fazer mais nada.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>🎁 Ver Prêmios:</strong><br>
+                    Os prêmios disponíveis aparecem no <strong>canto esquerdo</strong> da roleta.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>🏆 Prêmio em Jogo:</strong><br>
+                    O prêmio que será sorteado agora está exibido <strong>acima da roleta</strong>.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>👥 Participantes:</strong><br>
+                    No <strong>centro da roleta</strong> você vê quantos participantes já estão concorrendo.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>🎰 Quando Gira:</strong><br>
+                    Assim que o <strong>número necessário de participantes</strong> for atingido, a roleta começa a girar automaticamente!
+                </p>
+                
+                <p style="margin-bottom: 20px;">
+                    <strong>📱 Fui Sorteado?</strong><br>
+                    Se você ganhar, será notificado por <strong>WhatsApp e E-mail</strong>!
+                </p>
+                
+                <hr style="margin: 25px 0; border: none; border-top: 2px dashed #ddd;">
+                
+                <!-- SEÇÃO RASPADINHA -->
+                <h3 style="color: #4caf50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid #4caf50;">🎫 RASPADINHA</h3>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>1️⃣ Suas Chances:</strong><br>
+                    Você começa com <strong>5 chances</strong> para raspar.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>2️⃣ Como Raspar:</strong><br>
+                    Clique em <strong>"RASPAR"</strong> e arraste o mouse (ou dedo) sobre a área dourada.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>3️⃣ Ver Prêmios:</strong><br>
+                    Clique no botão do <strong>presente (🎁)</strong> no canto direito para ver todos os prêmios disponíveis.
+                </p>
+                
+                <p style="margin-bottom: 12px;">
+                    <strong>4️⃣ Descubra seu Prêmio:</strong><br>
+                    Raspe para revelar se você ganhou um dos prêmios incríveis!
+                </p>
+                
+                <h4 style="color: #ff9800; margin: 20px 0 15px; font-size: 1.2em;">✨ Ganhe Mais Chances:</h4>
+                
+                <p style="margin-bottom: 12px; padding-left: 15px;">
+                    <strong>👥 Indicando Amigos:</strong><br>
+                    Cada amigo indicado = <strong>+1 chance</strong>
+                </p>
+                
+                <p style="margin-bottom: 12px; padding-left: 15px;">
+                    <strong>⭐ Avaliando no Google:</strong><br>
+                    Deixe sua avaliação = <strong>+2 chances</strong> extras
+                </p>
+                
+                <p style="margin-bottom: 12px; padding-left: 15px;">
+                    <strong>💡 Quando Acabam:</strong><br>
+                    Um modal aparecerá oferecendo essas opções automaticamente!
+                </p>
+                
+                <p style="text-align: center; margin-top: 30px; font-size: 1.4em; font-weight: bold; color: #4caf50; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+                    🍀 Boa sorte nos dois jogos! 🍀
+                </p>
+            </div>
+            
+            <button class="btn-fechar" onclick="fecharModal('modal-como-jogar')">ENTENDI!</button>
+        </div>
+    </div>
+
+    <!-- Modal Premiações (🎁) -->
+    <div class="modal" id="modal-premiacoes">
+        <div class="modal-content">
+            <h2 style="color: #DC143C;">🎁 PREMIAÇÕES</h2>
+            
+            <div style="text-align: left; margin: 20px 0;">
+                <h3 style="color: #4caf50; margin-bottom: 20px; text-align: center;">
+                    Veja o que você pode ganhar:
+                </h3>
+            </div>
+        </div>
+    </div>
+
+   <!-- MODAL PRÊMIO GANHO NA RASPADINHA -->
+    <div class="modal-premio-ganho" id="modalPremioGanhoRaspadinha">
+        <div class="modal-premio-content">
+            <h2 id="tituloPremioRaspadinha">🎉 PARABÉNS!</h2>
+            <div class="modal-premio-nome" id="premioGanhoTextoRaspadinha"></div>
+            <div class="modal-premio-info" id="chancesRestantesTextoRaspadinha"></div>
+            <button class="modal-premio-btn" onclick="fecharModalPremioRaspadinha()">
+                ✅ ENTENDI!
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL CHANCES ACABARAM NA RASPADINHA -->
+    <div class="modal-chances-acabaram-raspadinha" id="modalChancesAcabaramRaspadinha">
+        <div class="modal-chances-content-raspadinha">
+            <h2>💔 Suas Chances Acabaram</h2>
+            <div class="modal-chances-texto-raspadinha">
+                Mas não fique triste! Você pode conseguir mais chances:
+                <br><br>
+                ⭐ Avaliando no Google
+                <br>
+                👥 Indicando amigos
+            </div>
+            <div class="modal-chances-btns-raspadinha">
+                <button class="btn-modal verde" onclick="abrirModalIndicacao(); fecharModalChancesRaspadinha();">
+                    👥 INDICAR AMIGOS
+                </button>
+                <button class="btn-modal laranja" onclick="avaliarGooglePrincipal(); fecharModalChancesRaspadinha();">
+                    ⭐ AVALIAR NO GOOGLE
+                </button>
+                <button class="modal-chances-btn-raspadinha" onclick="fecharModalChancesRaspadinha()">
+                    OK, ENTENDI
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    console.log('🎮 Sistema de Jogos Unisense - Iniciado');
+
+    let usuarioDados = {};
+    let contadorFormularios = 1;
+
+    /**
+     * Máscara de telefone
+     */
+    document.getElementById('whatsapp').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length > 10) {
+            value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+        } else if (value.length > 6) {
+            value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+        } else if (value.length > 2) {
+            value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+        } else {
+            value = value.replace(/^(\d*)/, '($1');
+        }
+        
+        e.target.value = value;
+    });
+
+    /**
+     * Validação de e-mail
+     */
+    function validarEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    /**
+     * Função principal de cadastro
+     */
+    async function iniciarRaspadinha() {
+        const nome = document.getElementById('nome').value.trim();
+        const whatsapp = document.getElementById('whatsapp').value.trim();
+        const email = document.getElementById('email').value.trim();
+
+        // Limpa erros anteriores
+        document.querySelectorAll('.mensagem-erro').forEach(el => el.classList.remove('ativo'));
+        document.querySelectorAll('.form-group input').forEach(el => el.classList.remove('erro'));
+
+        let hasError = false;
+
+        if (!nome) {
+            document.getElementById('erro-nome').classList.add('ativo');
+            document.getElementById('nome').classList.add('erro');
+            hasError = true;
+        }
+
+        if (!whatsapp || whatsapp.replace(/\D/g, '').length < 10) {
+            document.getElementById('erro-whatsapp').classList.add('ativo');
+            document.getElementById('whatsapp').classList.add('erro');
+            hasError = true;
+        }
+
+        if (!email || !validarEmail(email)) {
+            document.getElementById('erro-email').classList.add('ativo');
+            document.getElementById('email').classList.add('erro');
+            hasError = true;
+        }
+
+        if (hasError) return;
+
+        try {
+            mostrarLoading(true);
+            
+            const response = await fetch(CONFIG.buildURL(CONFIG.API.SIGNUP), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    nome, 
+                    whatsapp: whatsapp.replace(/\D/g, ''), 
+                    email 
+                }),
+            });
+
+            const data = await response.json();
+            
+            if (response.status === 409) {
+                let mensagemErro = data.message || data.error;
+                
+                if (data.error.includes('Email')) {
+                    document.getElementById('erro-email').textContent = mensagemErro;
+                    document.getElementById('erro-email').classList.add('ativo');
+                    document.getElementById('email').classList.add('erro');
+                } else if (data.error.includes('WhatsApp')) {
+                    document.getElementById('erro-whatsapp').textContent = mensagemErro;
+                    document.getElementById('erro-whatsapp').classList.add('ativo');
+                    document.getElementById('whatsapp').classList.add('erro');
+                }
+                
+                mostrarLoading(false);
+                return;
+            }
+            
+            if (!response.ok || data.error) {
+                throw new Error(data.error || 'Erro ao comunicar com o servidor.');
+            }
+
+            usuarioDados = data.user;
+
+        // 🆕 SALVAR NO LOCALSTORAGE IMEDIATAMENTE
+        localStorage.setItem('participante_nome', data.user.nome);
+        localStorage.setItem('participante_email', data.user.email);
+        localStorage.setItem('participante_whatsapp', data.user.whatsapp);
+        localStorage.setItem('participante_id', data.user.id);
+
+        console.log('💾 Dados salvos no localStorage:', {
+            nome: data.user.nome,
+            email: data.user.email,
+            whatsapp: data.user.whatsapp
+        });
+            
+            const iframeRaspadinha = document.getElementById('iframe-raspadinha');
+            if (iframeRaspadinha && iframeRaspadinha.contentWindow) {
+                iframeRaspadinha.contentWindow.postMessage({
+                    action: 'iniciarComDados',
+                    data: usuarioDados
+                }, '*');
+            }
+
+            document.getElementById('form-section').classList.add('hidden-form');
+            document.getElementById('game-wrapper').classList.remove('hidden');
+            
+            // 🎉 MOSTRAR MODAL DE BOAS-VINDAS
+            setTimeout(() => {
+                document.getElementById('modal-boas-vindas').classList.add('active');
+                document.body.classList.add('modal-open');
+                
+                if (typeof confetti !== 'undefined') {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                }
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ Erro no cadastro:', error);
+            alert('Ocorreu um erro ao processar seu cadastro. Por favor, tente novamente.');
+        } finally {
+            mostrarLoading(false);
+        }
+    }
+
+    /**
+     * Controle de loading
+     */
+    function mostrarLoading(mostrar) {
+        document.getElementById('loading-overlay').classList.toggle('hidden', !mostrar);
+    }
+
+    /**
+     * Fechar modal
+     */
+    function fecharModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    /**
+     * Fechar modal de boas-vindas
+     */
+    function fecharModalBoasVindas() {
+        document.getElementById('modal-boas-vindas').classList.remove('active');
+        document.body.classList.remove('modal-open');
+        
+        // 🎉 Confetti ao fechar
+        if (typeof confetti !== 'undefined') {
+            confetti({ 
+                particleCount: 80, 
+                spread: 60, 
+                origin: { y: 0.7 },
+                colors: ['#4caf50', '#667eea', '#ff9800']
+            });
+        }
+    }
+
+    /**
+     * Modal Universal
+     */
+    function mostrarModalUniversal(titulo, texto, botoesHtml = '') {
+        const content = document.getElementById('modal-universal-content');
+        content.innerHTML = `
+            <h2>${titulo}</h2>
+            <p>${texto}</p>
+            ${botoesHtml || '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">CONTINUAR</button>'}
+        `;
+        document.getElementById('modal-universal').classList.add('active');
+        
+        if (titulo.includes('🎉') && typeof confetti !== 'undefined') {
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+        }
+    }
+
+    /**
+     * Abrir modal de indicação
+     */
+    function abrirModalIndicacao() {
+        fecharModal('modal-chances-acabaram');
+        fecharModal('modalChancesAcabaramRaspadinha');
+        document.getElementById('modal-indicacao').classList.add('active');
+        setTimeout(() => {
+            aplicarMascaraTelefoneIndicacao();
+        }, 100);
+    }
+
+    /**
+     * Adicionar formulário de indicação
+     */
+    function adicionarFormularioIndicacao() {
+        const container = document.getElementById('formularios-indicacao');
+        const novoIndex = contadorFormularios++;
+        
+        const novoForm = document.createElement('div');
+        novoForm.className = 'form-indicacao';
+        novoForm.setAttribute('data-index', novoIndex);
+        novoForm.innerHTML = `
+            <h4>Amigo #${novoIndex + 1}</h4>
+            <div class="form-group-modal">
+                <label>Nome:</label>
+                <input type="text" class="input-nome-indicado" placeholder="Nome completo">
+            </div>
+            <div class="form-group-modal">
+                <label>WhatsApp:</label>
+                <input type="tel" class="input-whatsapp-indicado" placeholder="(11) 00000-0000" maxlength="15">
+            </div>
+            <div class="form-group-modal">
+                <label>E-mail:</label>
+                <input type="email" class="input-email-indicado" placeholder="email@exemplo.com">
+            </div>
+        `;
+        
+        container.appendChild(novoForm);
+        aplicarMascaraTelefoneIndicacao();
+    }
+
+    /**
+     * Aplicar máscara nos inputs de indicação
+     */
+    function aplicarMascaraTelefoneIndicacao() {
+        document.querySelectorAll('.input-whatsapp-indicado').forEach(input => {
+            // Remove listeners antigos para evitar duplicação
+            input.removeEventListener('input', mascaraTelefoneIndicacao);
+            input.removeEventListener('keydown', bloquearLetrasWhatsApp);
+            
+            // Adiciona os listeners
+            input.addEventListener('input', mascaraTelefoneIndicacao);
+            input.addEventListener('keydown', bloquearLetrasWhatsApp);
+            
+            // 🔧 FORÇA A MÁSCARA NO VALOR ATUAL
+            if (input.value) {
+                mascaraTelefoneIndicacao({ target: input });
+            }
+        });
+    }
+
+    function mascaraTelefoneIndicacao(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length > 10) {
+            value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+        } else if (value.length > 6) {
+            value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+        } else if (value.length > 2) {
+            value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+        } else {
+            value = value.replace(/^(\d*)/, '($1');
+        }
+        
+        e.target.value = value;
+    }
+
+    // 🔒 Bloquear entrada de letras
+    function bloquearLetrasWhatsApp(e) {
+        const permitidos = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+        
+        if (!permitidos.includes(e.key) && (e.key < '0' || e.key > '9')) {
+            e.preventDefault();
+            return false;
+        }
+    }
+
+    // Bloquear entrada de letras no campo de WhatsApp da indicação
+    function bloquearLetrasWhatsApp(e) {
+        // Permitir apenas: números, backspace, delete, setas, tab
+        const permitidos = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+        
+        if (!permitidos.includes(e.key) && (e.key < '0' || e.key > '9')) {
+            e.preventDefault();
+            return false;
+        }
+    }
+
+    // Aplicar bloqueio em todos os campos de WhatsApp de indicação
+    function aplicarBloqueioLetras() {
+        document.querySelectorAll('.input-whatsapp-indicado').forEach(input => {
+            input.addEventListener('keydown', bloquearLetrasWhatsApp);
+        });
+    }
+
+    /**
+     * Enviar indicações
+     */
+    async function enviarIndicacoesPrincipal() {
+        console.log('🎯 FUNÇÃO enviarIndicacoesPrincipal CHAMADA');
+        console.trace(); // Mostra de onde veio a chamada
+        const formularios = document.querySelectorAll('.form-indicacao');
+        const indicacoes = [];
+        let temErro = false;
+        
+        // Limpar erros anteriores
+        document.querySelectorAll('.form-group-modal input').forEach(input => {
+            input.classList.remove('erro');
+        });
+        
+        formularios.forEach((form) => {
+            const nome = form.querySelector('.input-nome-indicado').value.trim();
+            const whatsappComMascara = form.querySelector('.input-whatsapp-indicado').value.trim();
+            const email = form.querySelector('.input-email-indicado').value.trim();
+            
+            // Se todos os campos estão vazios, pula
+            if (!nome && !whatsappComMascara && !email) return;
+            
+            // Validação do nome
+            if (!nome) {
+                form.querySelector('.input-nome-indicado').classList.add('erro');
+                temErro = true;
+            }
+            
+            // Validação do WhatsApp
+            const whatsappLimpo = whatsappComMascara.replace(/\D/g, '');
+            
+            if (!whatsappComMascara || whatsappLimpo.length < 10) {
+                form.querySelector('.input-whatsapp-indicado').classList.add('erro');
+                temErro = true;
+            }
+            
+            // 🆕 VALIDAÇÃO DO E-MAIL (OPCIONAL)
+            // Se o e-mail foi preenchido, valida. Se não foi, ignora.
+            if (email && !validarEmail(email)) {
+                form.querySelector('.input-email-indicado').classList.add('erro');
+                temErro = true;
+            }
+            
+            // 🆕 ADICIONAR À LISTA (e-mail opcional)
+            if (nome && whatsappLimpo.length >= 10) {
+                indicacoes.push({ 
+                    nome, 
+                    whatsapp: whatsappLimpo,
+                    email: email || 'nao-informado@exemplo.com' // E-mail padrão se vazio
+                });
+            }
+        });
+        
+        if (temErro) {
+            mostrarModalUniversal(
+                '❌ Erro', 
+                'Por favor, preencha todos os campos corretamente!', 
+                '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+            );
+            return;
+        }
+        
+        if (indicacoes.length === 0) {
+            mostrarModalUniversal(
+                '❌ Atenção', 
+                'Preencha pelo menos um amigo para indicar!', 
+                '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+            );
+            return;
+        }
+        
+        if (!usuarioDados || !usuarioDados.id) {
+            mostrarModalUniversal(
+                '❌ Erro', 
+                'Não foi possível identificar seus dados. Por favor, recarregue a página.', 
+                '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+            );
+            return;
+        }
+        
+        try {
+            const payload = {
+                indicante_id: usuarioDados.id,
+                indicante_nome: usuarioDados.nome,
+                indicante_email: usuarioDados.email,
+                indicante_whatsapp: usuarioDados.whatsapp,
+                indicacoes: indicacoes
+            };
+            
+            console.log('📤 Enviando indicações:', payload);
+            
+            const response = await fetch(CONFIG.buildURL(CONFIG.API.INDICACOES), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textoErro = await response.text();
+                console.error('❌ Resposta não é JSON:', textoErro);
+                throw new Error('Servidor retornou resposta inválida');
+            }
+            
+            const data = await response.json();
+            console.log('📥 Resposta do servidor:', data);
+            
+            if (!response.ok || !data.success) {
+                if (data.detalhes && data.detalhes.length > 0) {
+                    const mensagemErro = data.detalhes.join('<br>');
+                    mostrarModalUniversal(
+                        '⚠️ Atenção', 
+                        mensagemErro, 
+                        '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+                    );
+                    return;
+                }
+                throw new Error(data.error || 'Erro ao salvar indicações');
+            }
+            
+            // Adicionar chances apenas uma vez
+            const chancesGanhas = data.chances_ganhas || data.indicacoes_salvas;
+
+            console.log('🎁 CHANCES QUE SERÃO ADICIONADAS:', chancesGanhas);
+            console.log('📦 RESPOSTA COMPLETA DO SERVIDOR:', data);
+            
+            const iframeRaspadinha = document.getElementById('iframe-raspadinha');
+            if (iframeRaspadinha && iframeRaspadinha.contentWindow) {
+                iframeRaspadinha.contentWindow.postMessage({
+                    action: 'adicionarChances',
+                    quantidade: chancesGanhas
+                }, '*');
+            }
+
+            console.log(`✅ PostMessage enviado: +${chancesGanhas} chances`);
+
+            // Resetar formulários
+            document.getElementById('formularios-indicacao').innerHTML = `
+                <div class="form-indicacao" data-index="0">
+                    <h4>Amigo #1</h4>
+                    <div class="form-group-modal">
+                        <label>Nome:</label>
+                        <input type="text" class="input-nome-indicado" placeholder="Nome completo">
+                    </div>
+                    <div class="form-group-modal">
+                        <label>WhatsApp:</label>
+                        <input type="tel" class="input-whatsapp-indicado" placeholder="(11) 00000-0000" maxlength="15">
+                    </div>
+                    <div class="form-group-modal">
+                        <label>E-mail:</label>
+                        <input type="email" class="input-email-indicado" placeholder="Não é obrigatório">
+                    </div>
+                </div>
+            `;
+            contadorFormularios = 1;
+            aplicarMascaraTelefoneIndicacao();
+
+            fecharModal('modal-indicacao');
+
+            mostrarModalUniversal(
+                '🎉 Sucesso!', 
+                `${data.indicacoes_salvas} indicação(ões) salva(s)!<br><br>Você ganhou <strong>+${chancesGanhas} chance${chancesGanhas > 1 ? 's' : ''}</strong>!`,
+                '<button class="btn-modal verde" onclick="fecharModal(\'modal-universal\')">CONTINUAR JOGANDO</button>'
+            );
+
+        } catch (error) {
+            console.error('❌ Erro completo:', error);
+            mostrarModalUniversal(
+                '❌ Erro', 
+                `Erro ao salvar indicações: ${error.message}`, 
+                '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+            );
+        }
+    }
+
+/**
+ * Avaliar no Google (COM CONTROLE)
+ */
+async function avaliarGooglePrincipal() {
+    console.log('⭐ FUNÇÃO avaliarGooglePrincipal CHAMADA');    
+    
+    // 🚫 VERIFICAR SE JÁ AVALIOU
+    const jaAvaliou = localStorage.getItem('ja_avaliou_google');
+    if (jaAvaliou === 'true') {
+        console.log('⚠️ Usuário já avaliou anteriormente');
+        mostrarModalUniversal(
+            '⭐ Você já avaliou!', 
+            'Você já deixou sua avaliação e ganhou suas chances extras. Obrigado! 💚',
+            '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+        );
+        return;
+    }
+    
+    // Abrir link de avaliação
+    window.open('https://www.google.com/search?client=firefox-b-d&sca_esv=b51b2d73c9f7d5a8&sxsrf=AE3TifOWqh-cmNhVexRaKSVvIc9PRn3s2w:1762954191849&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EznqF209KmUYAYyR_LEZvMiKlFfMAnyLZs8R3d63ETsKkA9MN61SR4SzaFzrKpJgcpCTdFMI6oGxRg8qGmeaCp_8041BGd823QBVadoIwa4LKY_PrFXhc2fsS0oCGeDCQNxn8S6fvCIeEubFUPB-SXx1z2vOCGF7-ehFsCRf2qugTEX2aHrs_H0M-k5I8MLDB2FimJ4RA3ETqibsv-4bxmkGZKNt0QLan9MatyARChmpWPbtXp3ktIjQ90HRo22rZhJ86-s%3D&q=UNISENSE+-+Sa%C3%BAde+e+Est%C3%A9tica+Avan%C3%A7ada+%7C+Botox,+Preenchimento+Labial,+Harmoniza%C3%A7%C3%A3o+Facial,+Bioestimuladores,+CO2+Fracionado...+Coment%C3%A1rios&sa=X&ved=2ahUKEwic-PCS3OyQAxXRELkGHXJ3PSoQ0bkNegQIQBAE&biw=1313&bih=654&dpr=1', '_blank');
+    
+    try {
+        const response = await fetch(CONFIG.buildURL(CONFIG.API.REGISTRAR_AVALIACAO), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                participante_id: usuarioDados.id,
+                participante_nome: usuarioDados.nome,
+                participante_email: usuarioDados.email
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ Avaliação registrada com sucesso');
+            
+            // 💾 MARCAR QUE JÁ AVALIOU (permanente no navegador)
+            localStorage.setItem('ja_avaliou_google', 'true');
+            console.log('💾 Marcado como "já avaliou" no localStorage');
+            
+            // 🎁 ADICIONAR +2 CHANCES NA RASPADINHA
+            const iframeRaspadinha = document.getElementById('iframe-raspadinha');
+            if (iframeRaspadinha && iframeRaspadinha.contentWindow) {
+                iframeRaspadinha.contentWindow.postMessage({
+                    action: 'adicionarChances',
+                    quantidade: 2
+                }, '*');
+                
+                console.log('✅ +2 chances enviadas para a raspadinha!');
+            }
+        } else {
+            throw new Error(data.error || 'Erro ao registrar avaliação');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao registrar avaliação:', error);
+    }
+    
+    fecharModal('modal-chances-acabaram');
+    fecharModal('modalChancesAcabaramRaspadinha');
+    
+    mostrarModalUniversal(
+        '🎉 Obrigado!', 
+        'Você ganhou <strong>+2 chances</strong> extras!',
+        '<button class="btn-modal verde" onclick="fecharModal(\'modal-universal\')">CONTINUAR JOGANDO</button>'
+    );
+}
+
+        function mostrarModalPremioRaspadinha(premio, chancesRestantes) {
+            const modal = document.getElementById('modalPremioGanhoRaspadinha');
+            const titulo = document.getElementById('tituloPremioRaspadinha');
+            const textoPremio = document.getElementById('premioGanhoTextoRaspadinha');
+            const textoChances = document.getElementById('chancesRestantesTextoRaspadinha');
+            
+            // 🎯 VERIFICAR SE É "NÃO FOI DESSA VEZ"
+            const naoGanhou = premio.toLowerCase().includes('não foi');
+            
+            if (naoGanhou) {
+                // ❌ ESCONDE O "PARABÉNS!"
+                titulo.style.display = 'none';
+            } else {
+                // ✅ MOSTRA O "PARABÉNS!"
+                titulo.style.display = 'block';
+            }
+            
+            textoPremio.textContent = premio;
+            textoChances.textContent = `Você ainda tem ${chancesRestantes} ${chancesRestantes === 1 ? 'chance' : 'chances'}!`;
+            
+            modal.classList.add('active');
+        }
+
+    function fecharModalPremioRaspadinha() {
+        document.getElementById('modalPremioGanhoRaspadinha').classList.remove('active');
+    }
+
+   /**
+ * Mostrar modal chances acabaram (COM CONTROLE)
+ */
+function mostrarModalChancesAcabaramRaspadinha() {
+    const modal = document.getElementById('modalChancesAcabaramRaspadinha');
+    const botoesDiv = modal.querySelector('.modal-chances-btns-raspadinha');
+    
+    // 🔍 VERIFICAR SE JÁ AVALIOU
+    const jaAvaliou = localStorage.getItem('ja_avaliou_google');
+    
+    if (jaAvaliou === 'true') {
+        console.log('⚠️ Usuário já avaliou - escondendo botão');
+        
+        // 🚫 ESCONDER BOTÃO DE AVALIAR
+        botoesDiv.innerHTML = `
+            <button class="btn-modal verde" onclick="abrirModalIndicacao(); fecharModalChancesRaspadinha();">
+                👥 INDICAR AMIGOS
+            </button>
+            <button class="modal-chances-btn-raspadinha" onclick="fecharModalChancesRaspadinha()">
+                OK, ENTENDI
+            </button>
+        `;
+        
+        // ✏️ MUDAR O TEXTO TAMBÉM
+        const textoDiv = modal.querySelector('.modal-chances-texto-raspadinha');
+        textoDiv.innerHTML = `
+            Mas não fique triste! Você pode conseguir mais chances:
+            <br><br>
+            👥 Indicando amigos
+            <br><br>
+            <small style="opacity: 0.7;">Você já ganhou suas chances por avaliar! ⭐</small>
+        `;
+        
+    } else {
+        console.log('✅ Primeira vez - mostrando todos os botões');
+        
+        // ✅ MOSTRAR TODOS OS BOTÕES
+        botoesDiv.innerHTML = `
+            <button class="btn-modal verde" onclick="abrirModalIndicacao(); fecharModalChancesRaspadinha();">
+                👥 INDICAR AMIGOS
+            </button>
+            <button class="btn-modal laranja" onclick="avaliarGooglePrincipal(); fecharModalChancesRaspadinha();">
+                ⭐ AVALIAR NO GOOGLE
+            </button>
+            <button class="modal-chances-btn-raspadinha" onclick="fecharModalChancesRaspadinha()">
+                OK, ENTENDI
+            </button>
+        `;
+        
+        // Texto padrão
+        const textoDiv = modal.querySelector('.modal-chances-texto-raspadinha');
+        textoDiv.innerHTML = `
+            Mas não fique triste! Você pode conseguir mais chances:
+            <br><br>
+            ⭐ Avaliando no Google
+            <br>
+            👥 Indicando amigos
+        `;
+    }
+    
+    modal.classList.add('active');
+}
+
+    function fecharModalChancesRaspadinha() {
+        document.getElementById('modalChancesAcabaramRaspadinha').classList.remove('active');
+    }
+
+    /**
+     * Enter para enviar o formulário
+     */
+    document.querySelectorAll('.form-group input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                iniciarRaspadinha();
+            }
+        });
+    });
+
+    /**
+     * LISTENER ÚNICO PARA TODAS AS MENSAGENS DOS IFRAMES
+     */
+    window.addEventListener('message', function(event) {
+        const msg = event.data || {};
+        
+        // 🎁 PRÊMIO GANHO NA RASPADINHA
+        if (msg.action === 'premioGanho') {
+            console.log('🎉 Prêmio ganho recebido:', msg);  
+            
+            mostrarModalPremioRaspadinha(msg.premio, msg.chancesRestantes);
+            
+            // 🆕 REGISTRAR COM DADOS CORRETOS
+            const participanteData = msg.participante || {
+                nome: usuarioDados.nome || localStorage.getItem('participante_nome') || 'Anônimo',
+                email: usuarioDados.email || localStorage.getItem('participante_email') || 'sem-email',
+                whatsapp: usuarioDados.whatsapp || localStorage.getItem('participante_whatsapp') || 'sem-whatsapp'
+            };
+            
+            console.log('💾 Registrando sorteio com dados:', participanteData);
+            
+            registrarSorteioRaspadinha(msg.premio, participanteData);
+            return;
+        }
+
+        /**
+ * Mostrar modal chances acabaram (MODAL ANTIGO)
+ */
+function mostrarModalChancesAcabaram() {
+    const jaAvaliou = localStorage.getItem('ja_avaliou_google');
+    const modal = document.getElementById('modal-chances-acabaram');
+    const opcaoAvaliacao = modal.querySelector('.opcao-box[style*="fff3e0"]');
+    
+    if (jaAvaliou === 'true' && opcaoAvaliacao) {
+        // 🚫 ESCONDER A SEÇÃO INTEIRA DE AVALIAÇÃO
+        opcaoAvaliacao.style.display = 'none';
+    } else if (opcaoAvaliacao) {
+        // ✅ GARANTIR QUE ESTÁ VISÍVEL
+        opcaoAvaliacao.style.display = 'block';
+    }
+    
+    modal.classList.add('active');
+}
+
+        // 💔 CHANCES ACABARAM NA RASPADINHA
+        if (msg.action === 'chancesAcabaram') {
+            mostrarModalChancesAcabaramRaspadinha();
+            return;
+        }
+        
+        // 🎯 Chances acabaram (sistema antigo)
+        if (msg.action === 'chances-acabaram') {
+            document.getElementById('modal-chances-acabaram').classList.add('active');
+            return;
+        }
+        
+        // 🎉 Mostrar resultado do prêmio
+        if (msg.action === 'mostrarResultado') {
+            const modalTitulo = document.getElementById('modal-titulo');
+            const modalTexto = document.getElementById('modal-texto');
+            
+            if (modalTitulo) modalTitulo.innerHTML = msg.titulo;
+            if (modalTexto) modalTexto.innerHTML = msg.texto;
+            
+            document.getElementById('modal-resultado').classList.add('active');
+            
+            if (msg.autoFecha) {
+                setTimeout(() => {
+                    fecharModal('modal-resultado');
+                }, msg.tempoFecho || 2000);
+            }
+            return;
+        }
+        
+        // Roleta girou
+        if (msg.action === 'roletaGirou') {
+            usuarioDados = {
+                nome: msg.nome || 'Usuário',
+                whatsapp: msg.whatsapp || '',
+                email: msg.email || ''
+            };
+            return;
+        }
+        
+        // Roleta parou (vencedor)
+        if (msg.action === 'roletaParou') {
+            const htmlCustom = document.getElementById('modal-html-custom');
+            if (htmlCustom) {
+                htmlCustom.innerHTML = `
+                    <div style="margin: 30px 0; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; color: white;">
+                        <h3 style="margin-bottom: 15px; font-size: 1.8em;">🎊 VENCEDOR DA ROLETA 🎊</h3>
+                        <p style="font-size: 1.3em; margin: 10px 0;"><strong>${msg.vencedor}</strong></p>
+                        <p style="font-size: 1.1em; opacity: 0.9;">Ganhou: ${msg.premio}</p>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('modal-resultado').classList.add('active');
+            
+            if (typeof confetti !== 'undefined') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            return;
+        }
+
+        // Abrir modal de ajuda
+        if (msg.action === 'abrirModalAjuda') {
+            document.getElementById('modal-ajuda').classList.add('active');
+            return;
+        }
+
+        // 🎁 Abrir modal de prêmios pessoal
+        if (msg.action === 'abrirModalMeusPremios') {
+            carregarModalPremios();
+            return;
+        }
+
+        // 🎁 Abrir modal "Meus Prêmios"
+        if (msg.action === 'abrirModalPremios') {
+            carregarModalPremios();
+            return;
+        }
+        
+        // ❗ Abrir modal "Como Jogar"
+        if (msg.action === 'abrirComoJogar') {
+            document.getElementById('modal-como-jogar').classList.add('active');
+            return;
+        }
+        
+        // 🎁 Abrir modal "Premiações" - BUSCAR DA API
+        if (msg.action === 'abrirPremiacoes') {
+            const modalContent = document.querySelector('#modal-premiacoes .modal-content');
+    
+        // Mostrar loading
+        const loadingHTML = `
+            <h2 style="color: #DC143C;">🎁 PREMIAÇÕES</h2>
+            <div style="text-align: center; padding: 40px;">
+                <p style="color: #666;">Carregando prêmios...</p>
+            </div>
+            <button class="btn-fechar" onclick="fecharModal('modal-premiacoes')">FECHAR</button>
+        `;
+        modalContent.innerHTML = loadingHTML;
+        document.getElementById('modal-premiacoes').classList.add('active');
+        
+        // 🎯 BUSCAR PRÊMIOS AGENDADOS DA API
+            fetch(CONFIG.buildURL(CONFIG.API.RASPADINHAS_AGENDADAS))
+                .then(response => {
+                if (!response.ok) throw new Error('Erro ao buscar raspadinhas');
+                return response.json();
+            })
+            .then(raspadinhas => {
+                // ⏰ PEGAR DATA E HORA ATUAL
+                const agora = new Date();
+                const agoraEmSP = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+                
+                const ano = agoraEmSP.getFullYear();
+                const mes = String(agoraEmSP.getMonth() + 1).padStart(2, '0');
+                const dia = String(agoraEmSP.getDate()).padStart(2, '0');
+                const dataHoje = `${ano}-${mes}-${dia}`;
+                
+                const horaAtual = String(agoraEmSP.getHours()).padStart(2, '0') + ':' + 
+                                String(agoraEmSP.getMinutes()).padStart(2, '0');
+                
+                // 🔍 FILTRAR RASPADINHAS ATIVAS
+                const raspadinhasAtivas = raspadinhas.filter(r => {
+                    return r.data_raspadinha === dataHoje && 
+                        (r.status === 'pendente' || r.status === 'ativo') &&
+                        r.hora_inicio <= horaAtual && r.hora_fim >= horaAtual;
+                });
+                
+                let premiosHTML = '';
+                let totalPremios = 0;
+                
+                if (raspadinhasAtivas.length > 0) {
+                    // 🆕 PROCESSAR TODAS AS RASPADINHAS ATIVAS
+                    raspadinhasAtivas.forEach(raspadinha => {
+                        let premiosDistribuicao = [];
+                        try {
+                            premiosDistribuicao = JSON.parse(raspadinha.premios_distribuicao || '[]');
+                        } catch (e) {
+                            console.error('Erro ao fazer parse:', e);
+                            return;
+                        }
+                        
+                        // Filtrar prêmios ativos por horário
+                        const premiosAtivos = premiosDistribuicao.filter(p => {
+                            return p.horario_inicio <= horaAtual && p.horario_fim >= horaAtual;
+                        });
+                        
+                        // 🎁 ADICIONAR CADA PRÊMIO AO HTML
+                        premiosAtivos.forEach((premio, index) => {
+                            const cores = [
+                                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+                            ];
+                            const cor = cores[totalPremios % cores.length];
+                            
+                            premiosHTML += `
+                                <div style="background: ${cor}; padding: 20px; border-radius: 15px; margin-bottom: 15px; color: white;">
+                                    <h4 style="font-size: 1.5em; margin-bottom: 10px;">🎉 ${premio.premio_nome}</h4>
+                                    <p style="opacity: 0.9; font-size: 0.95em;">⏰ Disponível das ${premio.horario_inicio} até ${premio.horario_fim}</p>
+                                </div>
+                            `;
+                            totalPremios++;
+                        });
+                    });
+                    
+                    if (totalPremios === 0) {
+                        premiosHTML = `
+                            <div style="background: #fff3e0; padding: 20px; border-radius: 15px; margin-bottom: 15px;">
+                                <p style="color: #f57c00; font-size: 1.1em;">⏰ Nenhum prêmio disponível neste horário</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    premiosHTML = `
+                        <div style="background: #fff3e0; padding: 20px; border-radius: 15px; margin-bottom: 15px;">
+                            <p style="color: #f57c00; font-size: 1.1em;">⏰ Nenhuma raspadinha agendada no momento</p>
+                        </div>
+                    `;
+                }
+                
+                // Montar o HTML completo do modal
+                const htmlCompleto = `
+                    <h2 style="color: #DC143C;">🎁 PREMIAÇÕES</h2>
+                    
+                    <div style="text-align: left; margin: 20px 0;">
+                        <h3 style="color: #4caf50; margin-bottom: 20px; text-align: center;">
+                            ${totalPremios > 0 ? `Confira ${totalPremios} prêmio${totalPremios !== 1 ? 's' : ''} disponível${totalPremios !== 1 ? 'is' : ''} agora:` : 'Veja as premiações:'}
+                        </h3>
+                        
+                        ${premiosHTML}
+                        
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 15px; margin-top: 25px; text-align: center;">
+                            <p style="font-size: 1.1em; color: #333; margin-bottom: 10px;">
+                                <strong>🎡 BÔNUS:</strong>
+                            </p>
+                            <p style="color: #666;">
+                                Ao fazer login, você automaticamente participa da <strong style="color: #DC143C;">ROLETA DA SORTE</strong> com prêmios exclusivos!
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-fechar" onclick="fecharModal('modal-premiacoes')">FECHAR</button>
+                `;
+                
+                modalContent.innerHTML = htmlCompleto;
+            })
+            .catch(error => {
+                console.error('❌ Erro ao buscar prêmios:', error);
+                
+                const erroHTML = `
+                    <h2 style="color: #DC143C;">🎁 PREMIAÇÕES</h2>
+                    <div style="background: #ffebee; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;">
+                        <p style="color: #c62828; font-weight: bold; margin-bottom: 10px;">❌ Erro ao carregar prêmios</p>
+                        <p style="color: #666; font-size: 0.9em;">Tente novamente em alguns instantes</p>
+                    </div>
+                    <button class="btn-fechar" onclick="fecharModal('modal-premiacoes')">FECHAR</button>
+                `;
+                modalContent.innerHTML = erroHTML;
+            });
+        
+        return;
+    }
+            }
+        , false);
+
+        console.log('✅ Sistema carregado com sucesso!');
+
+           
+    // Função para registrar sorteio da raspadinha
+    async function registrarSorteioRaspadinha(premioNome, participanteData) {
+        // 🆕 GARANTIR QUE SEMPRE TENHA DADOS
+        const participante = {
+            nome: participanteData?.nome || 
+                usuarioDados?.nome || 
+                localStorage.getItem('participante_nome') || 
+                'Anônimo',
+            email: participanteData?.email || 
+                usuarioDados?.email || 
+                localStorage.getItem('participante_email') || 
+                'sem-email@exemplo.com',
+            whatsapp: participanteData?.whatsapp || 
+                    usuarioDados?.whatsapp || 
+                    localStorage.getItem('participante_whatsapp') || 
+                    'Sem WhatsApp'
+        };
+        
+        console.log('📝 Registrando sorteio da raspadinha:', {
+            premio: premioNome,
+            participante: participante
+        });
+        
+        // ⚠️ VALIDAÇÃO: Não salvar se for "Anônimo"
+        if (participante.nome === 'Anônimo') {
+            console.error('❌ ERRO: Tentando salvar com dados de Anônimo!');
+            console.log('🔍 Debug - usuarioDados:', usuarioDados);
+            console.log('🔍 Debug - participanteData:', participanteData);
+            console.log('🔍 Debug - localStorage:', {
+                nome: localStorage.getItem('participante_nome'),
+                email: localStorage.getItem('participante_email'),
+                whatsapp: localStorage.getItem('participante_whatsapp')
+            });
+            // NÃO RETORNAR, continuar para salvar e identificar o problema
+        }
+        
+        try {
+            const response = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    participante: participante,
+                    premio: {
+                        id: 0,
+                        nome: premioNome
+                    },
+                    tipo_sorteio: 'raspadinha'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Sorteio da raspadinha registrado com sucesso!');
+            } else {
+                console.error('❌ Erro ao registrar sorteio:', data);
+            }
+            
+        } catch (error) {
+            console.error('❌ Erro ao registrar sorteio da raspadinha:', error);
+        }
+    }
+
+    // ============================================
+    // CARREGAR MODAL DE PRÊMIOS
+    // ============================================
+    async function carregarModalPremios() {
+        // Abrir o modal primeiro
+        document.getElementById('modal-premios').classList.add('active');
+        
+        // Mostrar loading
+        document.getElementById('lista-meus-premios').innerHTML = '<p style="color: #999;">Carregando...</p>';
+        document.getElementById('lista-premios-disponiveis').innerHTML = '<p style="color: #999;">Carregando...</p>';
+        document.getElementById('lista-outros-ganhadores').innerHTML = '<p style="color: #999;">Carregando...</p>';
+        
+        try {
+            // 🏆 BUSCAR PRÊMIOS QUE EU GANHEI
+            const meuEmail = usuarioDados.email || localStorage.getItem('participante_email');
+            
+            const responseHistorico = await fetch(CONFIG.buildURL(CONFIG.API.HISTORICO));
+            const historico = await responseHistorico.json();
+            
+            const meusPremios = historico.filter(h => {
+                return h.email === meuEmail && 
+                    h.premio_nome !== 'Não foi dessa vez' &&
+                    h.premio_nome !== 'não foi dessa vez' &&
+                    !h.premio_nome.toLowerCase().includes('não foi');
+            });
+            
+            let htmlMeusPremios = '';
+            if (meusPremios.length > 0) {
+                meusPremios.forEach((premio, index) => {
+                    const data = new Date(premio.data_sorteio).toLocaleString('pt-BR');
+                    const tipo = premio.tipo_sorteio === 'raspadinha' ? '🎫' : '🎡';
+                    htmlMeusPremios += `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee; ${index === meusPremios.length - 1 ? 'border-bottom: none;' : ''}">
+                            <p style="margin: 0; font-weight: bold; color: #4caf50;">${tipo} ${premio.premio_nome}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">${data}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                htmlMeusPremios = '<p style="color: #999; text-align: center; padding: 20px;">Você ainda não ganhou nenhum prêmio. Continue tentando! 🍀</p>';
+            }
+            
+            document.getElementById('lista-meus-premios').innerHTML = htmlMeusPremios;
+            
+            // 🎯 BUSCAR PRÊMIOS DISPONÍVEIS
+            const responseRaspadinhas = await fetch(CONFIG.buildURL(CONFIG.API.RASPADINHAS_AGENDADAS));
+            const raspadinhas = await responseRaspadinhas.json();
+            
+            const agora = new Date();
+            const agoraEmSP = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+            const dataHoje = agoraEmSP.toISOString().split('T')[0];
+            const horaAtual = String(agoraEmSP.getHours()).padStart(2, '0') + ':' + String(agoraEmSP.getMinutes()).padStart(2, '0');
+            
+            const raspadinhasAtivas = raspadinhas.filter(r => {
+                return r.data_raspadinha === dataHoje && 
+                    (r.status === 'pendente' || r.status === 'ativo') &&
+                    r.hora_inicio <= horaAtual && r.hora_fim >= horaAtual;
+            });
+            
+            let htmlPremiosDisponiveis = '';
+            let totalDisponiveis = 0;
+            
+            raspadinhasAtivas.forEach(raspadinha => {
+                try {
+                    const premiosDistribuicao = JSON.parse(raspadinha.premios_distribuicao || '[]');
+                    const premiosAtivos = premiosDistribuicao.filter(p => p.horario_inicio <= horaAtual && p.horario_fim >= horaAtual);
+                    
+                    premiosAtivos.forEach((premio, index) => {
+                        htmlPremiosDisponiveis += `
+                            <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                                <p style="margin: 0; font-weight: bold; color: #2196f3;">🎁 ${premio.premio_nome}</p>
+                                <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">⏰ ${premio.horario_inicio} - ${premio.horario_fim}</p>
+                            </div>
+                        `;
+                        totalDisponiveis++;
+                    });
+                } catch (e) {
+                    console.error('Erro ao processar prêmios:', e);
+                }
+            });
+            
+            if (totalDisponiveis === 0) {
+                htmlPremiosDisponiveis = '<p style="color: #999; text-align: center; padding: 20px;">⏰ Nenhum prêmio disponível no momento</p>';
+            }
+            
+            document.getElementById('lista-premios-disponiveis').innerHTML = htmlPremiosDisponiveis;
+            
+            // 👥 BUSCAR ÚLTIMOS 3 GANHADORES (OUTROS)
+            const outrosGanhadores = historico
+                .filter(h => {
+                    return h.email !== meuEmail && 
+                        h.premio_nome !== 'Não foi dessa vez' &&
+                        h.premio_nome !== 'não foi dessa vez' &&
+                        !h.premio_nome.toLowerCase().includes('não foi');
+                })
+                .sort((a, b) => new Date(b.data_sorteio) - new Date(a.data_sorteio))
+                .slice(0, 3);
+            
+            let htmlOutrosGanhadores = '';
+            if (outrosGanhadores.length > 0) {
+                outrosGanhadores.forEach((ganhador, index) => {
+                    const data = new Date(ganhador.data_sorteio).toLocaleString('pt-BR');
+                    const tipo = ganhador.tipo_sorteio === 'raspadinha' ? '🎫' : '🎡';
+                    const primeiroNome = ganhador.nome.split(' ')[0];
+                    
+                    htmlOutrosGanhadores += `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee; ${index === outrosGanhadores.length - 1 ? 'border-bottom: none;' : ''}">
+                            <p style="margin: 0; font-weight: bold; color: #ff9800;">${tipo} ${primeiroNome} ganhou: ${ganhador.premio_nome}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 0.85em; color: #666;">${data}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                htmlOutrosGanhadores = '<p style="color: #999; text-align: center; padding: 20px;">Nenhum ganhador ainda</p>';
+            }
+            
+            document.getElementById('lista-outros-ganhadores').innerHTML = htmlOutrosGanhadores;
+            
+        } catch (error) {
+            console.error('❌ Erro ao carregar prêmios:', error);
+            document.getElementById('lista-meus-premios').innerHTML = '<p style="color: #f44336;">Erro ao carregar</p>';
+            document.getElementById('lista-premios-disponiveis').innerHTML = '<p style="color: #f44336;">Erro ao carregar</p>';
+            document.getElementById('lista-outros-ganhadores').innerHTML = '<p style="color: #f44336;">Erro ao carregar</p>';
+        }
+    }
+
+    // 🔄 AUTO-ATUALIZAR MODAL DE PRÊMIOS A CADA 10 SEGUNDOS
+    setInterval(() => {
+        const modal = document.getElementById('modal-premios');
+        // Só atualiza se o modal estiver aberto
+        if (modal && modal.classList.contains('active')) {
+            console.log('🔄 Atualizando modal de prêmios...');
+            carregarModalPremios();
+        }
+    }, 10000); // 10 segundos
+
+</script>
+</body>
+</html>

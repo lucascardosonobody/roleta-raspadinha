@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Sorteios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .winner-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .tab-button {
+            padding: 12px 24px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .tab-button:hover { background: rgba(139, 92, 246, 0.1); }
+        .tab-button.active {
+            color: #8b5cf6;
+            border-bottom-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(180deg, #6b46c1 0%, #d946a6 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { font-size: 32px; }
+        .logo-text h2 { font-size: 18px; font-weight: 700; line-height: 1.2; margin: 0; }
+        .version { font-size: 11px; opacity: 0.7; }
+        .sidebar-nav { flex: 1; padding: 20px 0; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: rgba(255,255,255,0.8); text-decoration: none; transition: all 0.3s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; border-left-color: white; }
+        .nav-item.active { background: rgba(255,255,255,0.15); color: white; border-left-color: white; font-weight: 600; }
+        .nav-icon { font-size: 20px; }
+        .nav-text { font-size: 14px; }
+        .sidebar-footer { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: white; color: #6b46c1; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 14px; font-weight: 600; }
+        .user-role { font-size: 11px; opacity: 0.7; }
+        body { padding-left: 250px; }
+        
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .sidebar.active { transform: translateX(0); }
+            body { padding-left: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">🎲</span>
+                <div class="logo-text">
+                    <h2>Sistema<br>Sorteio</h2>
+                    <span class="version">Versão 1.0</span>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard.html" class="nav-item">
+    <span class="nav-icon">📊</span>
+    <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="/admin/paineladm.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Administração</span>
+        </a>
+        <a href="/admin/historico.html" class="nav-item active">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-text">Histórico</span>
+        </a>
+        <a href="/admin/indicacoes.html" class="nav-item">
+            <span class="nav-icon">🔔</span>
+            <span class="nav-text">Indicações</span>
+        </a>
+        <a href="/final.html" class="nav-item">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-text">Página Pública</span>
+        </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar">A</div>
+                <div class="user-info">
+                    <span class="user-name">Admin</span>
+                    <span class="user-role">Administrador</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-purple-600">🏆 Histórico de Sorteios</h1>
+                    <p class="text-gray-600 mt-2">Veja todos os ganhadores e prêmios distribuídos</p>
+                </div>
+                <button onclick="carregarHistorico()" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition">
+                    🔄 Atualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl mb-6 fade-in">
+            <div class="flex border-b">
+                <button onclick="trocarAba('roleta')" id="tabRoleta" class="tab-button active flex-1">
+                    🎡 Roleta (<span id="countRoleta">0</span>)
+                </button>
+                <button onclick="trocarAba('raspadinha')" id="tabRaspadinha" class="tab-button flex-1">
+                    🎰 Raspadinha (<span id="countRaspadinha">0</span>)
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Período</label>
+                    <select id="periodoFiltro" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="hoje">Hoje</option>
+                        <option value="semana">Esta Semana</option>
+                        <option value="mes">Este Mês</option>
+                        <option value="todos">Todos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Prêmio</label>
+                    <select id="premioFiltro" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Todos os Prêmios</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Buscar Nome</label>
+                    <input type="text" id="nomeBusca" placeholder="Digite o nome..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Total de Sorteios</p>
+                        <p class="text-3xl font-bold text-purple-600" id="totalSorteios">0</p>
+                    </div>
+                    <div class="text-4xl">🎲</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Prêmios Distribuídos</p>
+                        <p class="text-3xl font-bold text-green-600" id="totalPremios">0</p>
+                    </div>
+                    <div class="text-4xl">🎁</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Ganhadores Únicos</p>
+                        <p class="text-3xl font-bold text-blue-600" id="ganhadoresUnicos">0</p>
+                    </div>
+                    <div class="text-4xl">👥</div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Último Sorteio</p>
+                        <p class="text-lg font-bold text-orange-600" id="ultimoSorteio">-</p>
+                    </div>
+                    <div class="text-4xl">⏰</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden fade-in">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                        <tr>
+                            <th class="px-6 py-4 text-left">🏆 Ganhador</th>
+                            <th class="px-6 py-4 text-left">📧 Contato</th>
+                            <th class="px-6 py-4 text-left">🎁 Prêmio</th>
+                            <th class="px-6 py-4 text-left">📅 Data</th>
+                            <th class="px-6 py-4 text-left">⏰ Hora</th>
+                            <th class="px-6 py-4 text-center">🎯 Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historicoBody">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <div class="text-6xl mb-4">⏳</div>
+                                <p>Carregando histórico...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-6 flex items-center justify-between bg-white rounded-xl p-4 shadow-lg">
+            <button id="prevPage" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                ← Anterior
+            </button>
+            <span id="paginaAtual" class="text-gray-700 font-semibold">Página 1</span>
+            <button id="nextPage" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Próxima →
+            </button>
+        </div>
+    </div>
+    <script src="/config.js"></script>
+    <script>
+        let historicoCompleto = [];
+        let historicoFiltrado = [];
+        let paginaAtual = 1;
+        let abaAtiva = 'roleta';
+        const itensPorPagina = 10;
+
+        function trocarAba(tipo) {
+            abaAtiva = tipo;
+            document.getElementById('tabRoleta').classList.toggle('active', tipo === 'roleta');
+            document.getElementById('tabRaspadinha').classList.toggle('active', tipo === 'raspadinha');
+            paginaAtual = 1;
+            aplicarFiltros();
+        }
+
+        async function carregarHistorico() {
+            try {
+                console.log('📡 Buscando histórico de sorteios...');
+                
+                // ✅ CONFIG.fetch já retorna JSON diretamente
+                const data = await CONFIG.fetch(CONFIG.API.HISTORICO);
+                console.log('📦 Resposta completa da API:', data);
+                
+                // Validar dados
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Dados inválidos recebidos da API');
+                }
+                
+                historicoCompleto = Array.isArray(data) ? data : (data.historico || []);
+                historicoFiltrado = [...historicoCompleto];
+                
+                console.log(`✅ ${historicoCompleto.length} sorteios carregados no total`);
+                
+                if (historicoCompleto.length > 0) {
+                    console.log('🔍 Exemplo do primeiro registro:', historicoCompleto[0]);
+                    console.log('🔍 Tipos de sorteio únicos encontrados:', 
+                        [...new Set(historicoCompleto.map(h => h.tipo_sorteio || 'null'))]);
+                }
+                
+                const countRoleta = historicoCompleto.filter(h => {
+                    const tipo = (h.tipo_sorteio || '').toLowerCase();
+                    return tipo !== 'raspadinha';
+                }).length;
+                
+                const countRaspadinha = historicoCompleto.filter(h => {
+                    const tipo = (h.tipo_sorteio || '').toLowerCase();
+                    return tipo === 'raspadinha';
+                }).length;
+                
+                console.log(`📊 Contagem - Roleta: ${countRoleta}, Raspadinha: ${countRaspadinha}`);
+                console.log(`📊 Total no banco: ${historicoCompleto.length}`);
+                
+                // Mostrar exemplos de cada tipo
+                console.log('📋 Exemplos de ROLETA:', 
+                    historicoCompleto.filter(h => {
+                        const tipo = (h.tipo_sorteio || '').toLowerCase();
+                        return tipo !== 'raspadinha';
+                    }).slice(0, 3).map(h => ({ nome: h.nome, tipo: h.tipo_sorteio, premio: h.premio_nome }))
+                );
+                
+                console.log('📋 Exemplos de RASPADINHA:', 
+                    historicoCompleto.filter(h => {
+                        const tipo = (h.tipo_sorteio || '').toLowerCase();
+                        return tipo === 'raspadinha';
+                    }).slice(0, 3).map(h => ({ nome: h.nome, tipo: h.tipo_sorteio, premio: h.premio_nome }))
+                );
+                
+                document.getElementById('countRoleta').textContent = countRoleta;
+                document.getElementById('countRaspadinha').textContent = countRaspadinha;
+                
+                await carregarPremiosNoFiltro();
+                atualizarEstatisticas();
+                aplicarFiltros();
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar histórico:', error);
+                console.error('Stack trace:', error.stack);
+                document.getElementById('historicoBody').innerHTML = `
+                    <tr><td colspan="6" class="px-6 py-12 text-center text-red-500">
+                        <div class="text-6xl mb-4">❌</div>
+                        <p class="font-bold mb-2">Erro ao carregar histórico</p>
+                        <p class="text-sm">${error.message}</p>
+                        <p class="text-xs mt-2">Tente recarregar a página</p>
+                    </td></tr>
+                `;
+            }
+        }
+
+        async function carregarPremiosNoFiltro() {
+            try {
+                // ✅ CONFIG.fetch já retorna JSON diretamente
+                const data = await CONFIG.fetch(CONFIG.API.PREMIOS);
+                
+                // Validar dados
+                if (!data || typeof data !== 'object') {
+                    console.error('⚠️ Dados inválidos recebidos');
+                    return;
+                }
+                
+                const premios = Array.isArray(data) ? data : (data.premios || []);
+                const select = document.getElementById('premioFiltro');
+                
+                premios.forEach(premio => {
+                    const option = document.createElement('option');
+                    option.value = premio.id;
+                    option.textContent = premio.nome;
+                    select.appendChild(option);
+                });
+                
+                console.log(`✅ ${premios.length} prêmios carregados no filtro`);
+                
+            } catch (error) {
+                console.error('⚠️ Erro ao carregar prêmios:', error);
+                console.error('Stack trace:', error.stack);
+            }
+        }
+
+        function atualizarEstatisticas() {
+            const dadosAba = historicoCompleto.filter(h => {
+                const tipo = (h.tipo_sorteio || '').toLowerCase();
+                if (abaAtiva === 'roleta') {
+                    return tipo !== 'raspadinha';
+                }
+                return tipo === 'raspadinha';
+            });
+            
+            document.getElementById('totalSorteios').textContent = dadosAba.length;
+            document.getElementById('totalPremios').textContent = dadosAba.filter(h => h.premio_ganho || h.premio_nome).length;
+            
+            const emailsUnicos = new Set(dadosAba.map(h => h.email || h.participante_email).filter(Boolean));
+            document.getElementById('ganhadoresUnicos').textContent = emailsUnicos.size;
+            
+            if (dadosAba.length > 0) {
+                const ultimo = new Date(dadosAba[0].data_sorteio);
+                const agora = new Date();
+                const diff = Math.floor((agora - ultimo) / 60000);
+                
+                if (diff < 1) document.getElementById('ultimoSorteio').textContent = 'Agora';
+                else if (diff < 60) document.getElementById('ultimoSorteio').textContent = `${diff}min`;
+                else if (diff < 1440) document.getElementById('ultimoSorteio').textContent = `${Math.floor(diff/60)}h`;
+                else document.getElementById('ultimoSorteio').textContent = `${Math.floor(diff/1440)}d`;
+            }
+        }
+
+        function aplicarFiltros() {
+            const periodo = document.getElementById('periodoFiltro').value;
+            const premioId = document.getElementById('premioFiltro').value;
+            const busca = document.getElementById('nomeBusca').value.toLowerCase();
+            
+            console.log(`\n🔍 ===== APLICANDO FILTROS =====`);
+            console.log(`Aba ativa: ${abaAtiva}`);
+            console.log(`Total de registros: ${historicoCompleto.length}`);
+            
+            historicoFiltrado = historicoCompleto.filter(item => {
+                const tipo = (item.tipo_sorteio || '').toLowerCase().trim();
+                
+                // FILTRO POR ABA - LÓGICA SIMPLIFICADA
+                if (abaAtiva === 'raspadinha') {
+                    // Aba Raspadinha: APENAS tipo "raspadinha"
+                    if (tipo !== 'raspadinha') {
+                        return false;
+                    }
+                } else {
+                    // Aba Roleta: TUDO exceto "raspadinha"
+                    if (tipo === 'raspadinha') {
+                        return false;
+                    }
+                }
+                
+                // Filtro de período
+                const dataItem = new Date(item.data_sorteio);
+                const agora = new Date();
+                
+                if (periodo === 'hoje') {
+                    if (dataItem.toDateString() !== agora.toDateString()) return false;
+                } else if (periodo === 'semana') {
+                    const umaSemanaAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    if (dataItem < umaSemanaAtras) return false;
+                } else if (periodo === 'mes') {
+                    if (dataItem.getMonth() !== agora.getMonth() || dataItem.getFullYear() !== agora.getFullYear()) return false;
+                }
+                
+                // Filtro de prêmio
+                if (premioId && item.premio_id != premioId) return false;
+                
+                // Filtro de busca
+                const nome = item.nome || item.participante_nome || '';
+                if (busca && !nome.toLowerCase().includes(busca)) return false;
+                
+                return true;
+            });
+            
+            console.log(`✅ Após filtros: ${historicoFiltrado.length} itens`);
+            console.log(`===========================\n`);
+            
+            paginaAtual = 1;
+            atualizarEstatisticas();
+            renderizarTabela();
+        }
+
+        function renderizarTabela() {
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const itensPagina = historicoFiltrado.slice(inicio, fim);
+            
+            console.log(`📄 Renderizando página ${paginaAtual}: ${itensPagina.length} itens`);
+            
+            if (itensPagina.length === 0) {
+                const mensagemAba = abaAtiva === 'roleta' 
+                    ? 'Nenhum ganhador da roleta encontrado' 
+                    : 'Nenhum ganhador da raspadinha encontrado';
+                
+                const totalRoleta = historicoCompleto.filter(h => {
+                    const tipo = (h.tipo_sorteio || '').toLowerCase();
+                    return tipo !== 'raspadinha';
+                }).length;
+                
+                const totalRaspadinha = historicoCompleto.filter(h => {
+                    const tipo = (h.tipo_sorteio || '').toLowerCase();
+                    return tipo === 'raspadinha';
+                }).length;
+                    
+                document.getElementById('historicoBody').innerHTML = `
+                    <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <div class="text-6xl mb-4">🔍</div>
+                        <p class="font-bold">${mensagemAba}</p>
+                        <p class="text-sm mt-2">Total no banco: ${historicoCompleto.length} sorteios</p>
+                        <p class="text-xs text-gray-400 mt-1">Roleta/Sorteio: ${totalRoleta} | Raspadinha: ${totalRaspadinha}</p>
+                        <button onclick="window.location.reload()" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                            🔄 Recarregar
+                        </button>
+                    </td></tr>
+                `;
+                return;
+            }
+            
+            document.getElementById('historicoBody').innerHTML = itensPagina.map(item => {
+                const dataFormatada = formatarData(item.data_sorteio);
+                const horaFormatada = formatarHora(item.data_sorteio);
+                
+                const tipoOriginal = item.tipo_sorteio || 'cadastro';
+                const tipoLower = tipoOriginal.toLowerCase();
+                
+                let tipoIcon = '🎡';
+                let tipoTexto = 'Roleta';
+                let tipoCor = 'bg-blue-100 text-blue-800';
+                
+                if (tipoLower === 'raspadinha') {
+                    tipoIcon = '🎰';
+                    tipoTexto = 'Raspadinha';
+                    tipoCor = 'bg-purple-100 text-purple-800';
+                } else if (tipoLower === 'cadastro') {
+                    tipoIcon = '📝';
+                    tipoTexto = 'Cadastro';
+                    tipoCor = 'bg-green-100 text-green-800';
+                } else if (tipoLower === 'sorteio' || tipoLower === 'automatico') {
+                    tipoIcon = '🎲';
+                    tipoTexto = 'Sorteio';
+                    tipoCor = 'bg-orange-100 text-orange-800';
+                }
+                
+                const nome = item.nome || item.participante_nome || 'Nome não disponível';
+                const email = item.email || item.participante_email || 'Email não disponível';
+                const whatsapp = item.whatsapp || item.participante_whatsapp || 'Sem WhatsApp';
+                const premioNome = item.premio_nome || 'Prêmio não especificado';
+                
+                return `
+                    <tr class="border-b hover:bg-purple-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold mr-3">
+                                    ${nome.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">${nome}</p>
+                                    <p class="text-sm text-gray-500">${whatsapp}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-700">${email}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                                🎁 ${premioNome}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-700">${dataFormatada}</td>
+                        <td class="px-6 py-4 text-gray-700">${horaFormatada}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${tipoCor}">
+                                ${tipoIcon} ${tipoTexto}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            const totalPaginas = Math.ceil(historicoFiltrado.length / itensPorPagina);
+            document.getElementById('paginaAtual').textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+            document.getElementById('prevPage').disabled = paginaAtual === 1;
+            document.getElementById('nextPage').disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
+        }
+
+        document.getElementById('periodoFiltro').addEventListener('change', aplicarFiltros);
+        document.getElementById('premioFiltro').addEventListener('change', aplicarFiltros);
+        document.getElementById('nomeBusca').addEventListener('input', aplicarFiltros);
+        
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (paginaAtual > 1) {
+                paginaAtual--;
+                renderizarTabela();
+            }
+        });
+        
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPaginas = Math.ceil(historicoFiltrado.length / itensPorPagina);
+            if (paginaAtual < totalPaginas) {
+                paginaAtual++;
+                renderizarTabela();
+            }
+        });
+
+        function formatarData(dataISO) {
+            if (!dataISO) return 'Data indisponível';
+            
+            try {
+                const partes = dataISO.replace('T', ' ').replace('Z', '').split(' ');
+                const [ano, mes, dia] = partes[0].split('-');
+                return `${dia}/${mes}/${ano}`;
+            } catch (error) {
+                console.error('Erro ao formatar data:', error, dataISO);
+                return 'Data inválida';
+            }
+        }
+
+        function formatarHora(dataISO) {
+            if (!dataISO) return '--:--';
+            
+            try {
+                const partes = dataISO.replace('T', ' ').replace('Z', '').split(' ');
+                if (partes.length < 2) return '--:--';
+                const [hora, minuto] = partes[1].split(':');
+                return `${hora}:${minuto}`;
+            } catch (error) {
+                console.error('Erro ao formatar hora:', error, dataISO);
+                return '--:--';
+            }
+        }
+
+        carregarHistorico();
+        setInterval(carregarHistorico, 30000);
+        
+        function logout() {
+        if (confirm('Deseja sair?')) {
+            window.location.href = '/logout';
+        }
+    }
+    </script>
+    
+</body>
+</html>

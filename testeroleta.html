@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roleta de Prêmios</title>
+    <script src="/config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+           font-family: 'Montserrat', Arial, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        #video-fundo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+
+        .main-wrapper {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .topo-imagem {
+            width: 100%;
+            display: block;
+            margin: 0 auto;              /* ✅ Centralizar */
+            vertical-align: top;
+            height: 180px;               /* ✅ Ajuste conforme necessário */
+            object-fit: contain;         /* ✅ IMPORTANTE: Mostra completo */
+            object-position: center;     /* ✅ Centraliza */
+            background: transparent;     /* ✅ Fundo transparente */
+        }
+        
+        @keyframes pulsar {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        /* Responsivo para o texto sobre a imagem */
+        @media (max-width: 768px) {
+            .texto-sobre-imagem {
+                font-size: 1.2em;
+                padding: 15px 25px;
+                letter-spacing: 1px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .texto-sobre-imagem {
+                font-size: 0.9em;
+                padding: 10px 20px;
+                letter-spacing: 0.5px;
+            }
+        }
+
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 30px;
+            align-items: start;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .container {
+            width: 100%;
+            text-align: center;
+        }
+
+        .card-premios {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            min-width: 220px;
+            max-width: 280px;
+        }
+
+        .card-premios h3 {
+            color: #667eea;
+            font-size: 1em;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+
+        .premio-item {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 0.9em;
+            line-height: 1.3;
+        }
+
+        .premio-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .card-premios .sem-premios {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .container {
+            min-width: 0; /* Permite que o container encolha */
+        }
+
+        .roleta-wrapper {
+            width: 100%;
+            margin: 0 auto 50px;
+        }
+
+        h1 {
+            color: #fff !important;
+            font-size: 1.5em !important;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        .premio-rotativo {
+            color: #ffd700 !important;
+            animation: pulsar 1s ease-in-out infinite;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+
+        @keyframes pulsar {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .info-participantes {
+            color: #fff;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .roleta-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 530px;
+            margin: 0 auto 50px;
+        }
+
+       /* ajuste a posição como você já fazia */
+        .seta-indicador{
+            position:absolute;
+            top:-10px;                 /* afasta da roleta */
+            left:50%;
+            transform:translateX(-50%) rotate(-45deg);
+
+            width:22px;                /* cabe�a menor */
+            height:22px;
+
+            /* fuma�a suave */
+            filter:
+                drop-shadow(0 2px 4px rgba(0,0,0,.35))
+                drop-shadow(0 10px 18px rgba(0,0,0,.18));
+
+            z-index:9999;
+            pointer-events:none;
+
+            /* garante que os z-index internos funcionem isolados */
+            isolation:isolate;
+            }
+
+            /* CONTORNO branco (fica ATR�S) */
+            .seta-indicador::after{
+            content:"";
+            position:absolute;
+            inset:-2px;                        /* controla a espessura do contorno */
+            border-radius:50% 50% 50% 0;
+            background:#fff;
+            z-index:0;                         /* atr�s */
+            }
+
+            /* MIOLO dourado (fica NA FRENTE) */
+            .seta-indicador::before{
+            content:"";
+            position:absolute;
+            inset:0;
+            border-radius:50% 50% 50% 0;
+            background:#B8860B;                /* dourado */
+            z-index:1;                         /* na frente */
+        }
+
+
+
+
+        .roleta-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            margin: 0 auto;
+        }
+
+        #roletaCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: transform 0.1s ease-out;
+             border: 8px solid #B8860B;
+        }
+
+        .centro-roleta {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 5;
+            pointer-events: none;
+            padding: 20px;
+        }
+
+        .logo-roleta {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .mensagem-aguardando {
+            text-align: center;
+            font-size: 0.85em;
+            font-weight: 700;
+            color: #667eea;
+            line-height: 1.4;
+            padding: 10px;
+        }
+
+        .btn-girar {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.5em;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #b8860b, 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-girar:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #b8860b, 0 12px 25px rgba(0,0,0,0.4);
+        }
+
+        .btn-girar:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #b8860b, 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .btn-girar:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .resultado {
+            display: none;
+            background: #fff;
+            padding: 12px 20px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
+            animation: slideUp 0.5s ease-out;
+            
+            /* ✅ POSIÇÃO FIXA NO RODAPÉ */
+            position: fixed;
+            bottom: 20px;  /* ✅ 20PX ACIMA DO RODAPÉ */
+            left: 50%;
+            transform: translateX(-50%);  /* ✅ CENTRALIZADO */
+            
+            /* ✅ LARGURA */
+            width: 90%;
+            min-width: 150px;
+            max-width: 600px;
+            margin: 0;
+            box-sizing: border-box;
+            
+            /* ✅ Z-INDEX */
+            z-index: 9999;
+        }
+
+        .resultado.ativo {
+            display: block;
+        }
+
+        /* ✅ ANIMAÇÃO */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* ✅ TÍTULO "PARABÉNS" - MENOR */
+        .resultado h2 {
+            color: #667eea;
+            font-size: clamp(1.2em, 4vw, 1.5em);  /* ✅ REDUZIDO */
+            margin-bottom: 10px;                   /* ✅ REDUZIDO (era 15px) */
+            text-align: center;
+            font-weight: 800;
+        }
+
+        /* ✅ NOME DO GANHADOR - COMPACTO */
+        .resultado .ganhador {
+            font-size: clamp(1em, 3.5vw, 1.4em);  /* ✅ REDUZIDO */
+            color: #333;
+            font-weight: 900;
+            margin: 10px 0;                        /* ✅ REDUZIDO (era 15px) */
+            text-align: center;
+            
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+            
+            width: 100%;
+            max-width: 100%;
+            padding: 8px;                          /* ✅ REDUZIDO (era 10px) */
+            box-sizing: border-box;
+            line-height: 1.2;                      /* ✅ REDUZIDO (era 1.3) */
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: clip;
+        }
+
+        /* ✅ CLASSE ESPECIAL PARA NOMES LONGOS */
+        .resultado .ganhador.nome-extra-longo {
+            font-size: clamp(0.85em, 2.8vw, 1.1em) !important;
+            line-height: 1.1;
+            padding: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        /* ✅ PRÊMIO - COMPACTO */
+        .resultado .premio {
+            font-size: clamp(0.9em, 3vw, 1.2em);  /* ✅ REDUZIDO */
+            color: #fff;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 10px 15px;                    /* ✅ REDUZIDO (era 15px) */
+            border-radius: 8px;                    /* ✅ REDUZIDO (era 10px) */
+            text-align: center;
+            
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .aviso {
+            color: #fff;
+            background: rgba(255,68,68,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            color: #fff;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        /* Tablets */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                padding: 20px 15px;
+                gap: 20px;
+            }
+
+            .card-premios {
+                min-width: 200px;
+                max-width: 240px;
+                padding: 18px;
+            }
+
+            .card-premios h3 {
+                font-size: 1.1em;
+            }
+
+            .premio-item {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .roleta-wrapper {
+                max-width: 400px;
+                margin: 0 auto 40px;
+            }
+
+            .centro-roleta {
+                width: 150px;
+                height: 150px;
+            }
+
+            .mensagem-aguardando {
+                font-size: 0.75em;
+            }
+
+            .resultado {
+                padding: 12px 18px;
+                width: 88%;
+                max-width: 450px;
+                padding: 10px 18px;
+            }
+            
+            .resultado h2 {
+                font-size: clamp(1.1em, 3.8vw, 1.4em);
+                margin-bottom: 8px;
+            }
+            
+            .resultado .ganhador {
+                font-size: clamp(0.95em, 3.2vw, 1.3em);
+                margin: 8px 0;
+                padding: 7px;
+            }
+            
+            .resultado .ganhador.nome-extra-longo {
+                font-size: clamp(0.8em, 2.5vw, 1em) !important;
+            }
+            
+            .resultado .premio {
+                font-size: clamp(0.85em, 2.8vw, 1.1em);
+                padding: 9px 12px;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .topo-imagem {
+                max-height: 140px;
+                object-fit: cover;
+            }
+
+            .content-wrapper {
+                grid-template-columns: auto 1fr;
+                padding: 15px 10px;
+                gap: 10px;
+            }
+
+            .card-premios {
+                min-width: 160px;
+                max-width: 180px;
+                padding: 15px;
+            }
+
+            .card-premios h3 {
+                font-size: 0.95em;
+                margin-bottom: 10px;
+            }
+
+            .premio-item {
+                padding: 8px;
+                font-size: 0.75em;
+                margin-bottom: 8px;
+            }
+
+            h1 {
+                font-size: 1.1em;
+            }
+
+            .info-participantes {
+                font-size: 0.95em;
+                padding: 8px 15px;
+            }
+
+            .roleta-wrapper {
+                max-width: 240px;
+            }
+
+            .centro-roleta {
+                width: 120px;
+                height: 120px;
+                padding: 15px;
+            }
+
+            .mensagem-aguardando {
+                font-size: 0.65em;
+            }
+
+            .btn-girar {
+                padding: 12px 30px;
+                font-size: 1.1em;
+            }
+
+            .resultado {
+                bottom: 15px;
+                width: 85%;
+                max-width: 400px;
+                padding: 10px 15px;
+            }
+                    
+            .resultado h2 {
+                font-size: clamp(1em, 3.5vw, 1.3em);
+                margin-bottom: 7px;
+            }
+            
+            .resultado .ganhador {
+                font-size: clamp(0.9em, 3vw, 1.2em);
+                margin: 7px 0;
+                padding: 6px;
+            }
+            
+            .resultado .ganhador.nome-extra-longo {
+                font-size: clamp(0.75em, 2.2vw, 0.95em) !important;
+            }
+            
+            .resultado .premio {
+                font-size: clamp(0.8em, 2.5vw, 1em);
+                padding: 8px 10px;
+            }
+        }
+
+        /* Mobile Pequeno */
+        @media (max-width: 480px) {
+            .topo-imagem {
+                height: 100%px;
+            }
+
+            .content-wrapper {
+                gap: 8px;
+                padding: 10px 5px;
+            }
+
+            .card-premios {
+                min-width: 120px;
+                max-width: 140px;
+                padding: 12px;
+            }
+
+            .card-premios h3 {
+                font-size: 0.8em;
+                margin-bottom: 8px;
+            }
+
+            .premio-item {
+                padding: 6px;
+                font-size: 0.65em;
+                margin-bottom: 6px;
+            }
+
+            h1 {
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+
+            .info-participantes {
+                font-size: 0.7em;
+                padding: 5px 10px;
+                margin-bottom: 10px;
+            }
+
+            .roleta-wrapper {
+                max-width: 210px;
+                margin-bottom: 15px;
+            }
+
+            .centro-roleta {
+                width: 70px;
+                height: 70px;
+                padding: 8px;
+            }
+
+            .mensagem-aguardando {
+                font-size: 0.5em;
+                line-height: 1.2;
+            }
+
+            .btn-girar {
+                padding: 8px 20px;
+                font-size: 0.85em;
+                letter-spacing: 1px;
+            }
+
+            .resultado {
+                bottom: 10px;
+                width: 90%;
+                max-width: 320px;
+                padding: 8px 12px;
+            }
+            
+            .resultado h2 {
+                font-size: clamp(0.9em, 3vw, 1.1em);
+                margin-bottom: 5px;
+            }
+            
+            .resultado .ganhador {
+                font-size: clamp(0.8em, 2.8vw, 1em);
+                margin: 5px 0;
+                padding: 5px;
+                max-width: 100%;
+            }
+            
+            .resultado .ganhador.nome-extra-longo {
+                font-size: clamp(0.7em, 2vw, 0.85em) !important;
+                line-height: 1.1;
+                padding: 4px;
+            }
+            
+            .resultado .premio {
+                font-size: clamp(0.75em, 2.2vw, 0.9em);
+                padding: 6px 8px;
+            }
+
+            .aviso {
+                color: #fff;
+                background: rgba(255,68,68,0.9);
+                padding: 20px;
+                border-radius: 15px;
+                margin-top: 20px;
+                font-size: 1.1em;
+            }
+
+            .loading {
+                color: #fff;
+                font-size: 1.2em;
+                margin-top: 20px;
+            }
+
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Vídeo de Fundo -->
+    <video id="video-fundo" autoplay loop muted playsinline>
+        <source src="fundo roleta.mp4" type="video/mp4">
+    </video>
+    <div class="overlay-escuro"></div>
+    
+    <div class="main-wrapper">
+        <!-- Imagem do Topo -->
+        <img src="roleta topo.png" alt="Roleta Topo" class="topo-imagem">
+        <div class="content-wrapper">
+            <!-- Card Lateral: Próximos Prêmios (AGORA À ESQUERDA) -->
+            <div class="card-premios">
+                <h3>Próximos<br>Prêmios:</h3>
+                <div id="listaPremios">
+                    <div class="sem-premios">Carregando...</div>
+                </div>
+            </div>
+            <!-- Coluna Principal: Roleta -->
+            <div class="container">
+                <h1 id="tituloRoleta">🎡 Roleta de Prêmios 🎡</h1>
+                <div class="roleta-wrapper">
+                    <div class="seta-indicador"></div>
+                    <div class="roleta-container">
+                      <canvas id="roletaCanvas"></canvas>
+                      <div class="centro-roleta" id="centroRoleta">
+                          <img src="logounisense.jpeg" alt="Logo Unisense" class="logo-roleta" id="logoRoleta">
+                          <div class="mensagem-aguardando" id="mensagemAguardando" style="display:none;">
+                              A roleta vai começar automaticamente quando alcançar 50 participantes
+                          </div>
+                      </div>
+                  </div>
+                </div>
+
+               
+
+                <div class="resultado" id="resultado">
+                    <h2> PARABÉNS! </h2>
+                    <div class="ganhador" id="nomeGanhador"></div>
+                    <div class="premio" id="premioGanhador"></div>
+                </div>
+
+                <div class="loading" id="loading" style="display:none;">
+                    Carregando dados...
+                </div>
+            </div>
+
+    <script>
+        // ============================================
+        // VALIDAÇÃO DO CONFIG.JS
+        // ============================================
+        if (typeof CONFIG === 'undefined') {
+            console.error('❌ CONFIG.js não foi carregado!');
+            alert('Erro: Sistema não configurado corretamente. Recarregue a página.');
+        } else {
+            console.log('✅ CONFIG.js carregado na roleta');
+            console.log('🌐 Domínio:', CONFIG.DOMAIN);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAutoSorteio = urlParams.get('auto') === 'true';
+        const premioId = urlParams.get('premio_id');
+        const premioNome = urlParams.get('premio_nome');
+
+        // ============================================
+        // SISTEMA DE POLLING PARA RECEBER COMANDOS
+        // ============================================
+
+        const POLLING_INTERVAL = 2000; // Verifica a cada 2 segundos
+        let ultimoComandoTimestamp = 0;
+        let pollingAtivo = true;
+
+        // Função auxiliar para logs com timestamp
+        function logPolling(emoji, mensagem, dados = null) {
+            const agora = new Date().toLocaleTimeString('pt-BR');
+            console.log(`${emoji} [${agora}] ${mensagem}`, dados || '');
+        }
+
+        // Função para verificar comandos pendentes
+        async function verificarComandos() {
+            if (!pollingAtivo) return;
+            
+            logPolling('🔍', 'Verificando comandos pendentes...');
+            
+            try {
+                const response = await fetch(CONFIG.buildURL(CONFIG.API.VERIFICAR_COMANDO), {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    logPolling('❌', `Erro na resposta: ${response.status}`);
+                    return;
+                }
+                
+                const data = await response.json();
+                logPolling('📨', 'Resposta recebida:', JSON.stringify(data));
+                
+                if (data.success && data.comando) {
+                    const comando = data.comando;
+                    logPolling('✅', 'Comando encontrado:', JSON.stringify(comando));
+                    
+                    // Verificar se é um comando novo (evitar reprocessamento)
+                    if (comando.timestamp && comando.timestamp !== ultimoComandoTimestamp) {
+                        logPolling('🎰', 'NOVO COMANDO DETECTADO! Processando...');
+                        ultimoComandoTimestamp = comando.timestamp;
+                        
+                        // Processar comando
+                        await processarComando(comando);
+                        
+                        // Limpar comando no servidor
+                        try {
+                            const limparResponse = await fetch(CONFIG.buildURL(CONFIG.API.LIMPAR_COMANDO), {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            
+                            if (limparResponse.ok) {
+                                logPolling('🧹', 'Comando limpo no servidor');
+                            } else {
+                                logPolling('⚠️', 'Erro ao limpar comando');
+                            }
+                        } catch (error) {
+                            logPolling('⚠️', 'Erro ao limpar comando:', error.message);
+                        }
+                    } else {
+                        logPolling('⏭️', 'Comando já foi processado, ignorando...');
+                    }
+                } else {
+                    logPolling('⏳', 'Nenhum comando pendente');
+                }
+            } catch (error) {
+                logPolling('❌', 'Erro ao verificar comandos:', error.message);
+            }
+        }
+
+        // Função para processar o comando recebido
+        async function processarComando(comando) {
+            logPolling('⚙️', 'Processando comando:', JSON.stringify(comando));
+            
+            // Verificar tipo de comando
+            if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
+                logPolling('🎯', 'Comando de sorteio detectado!');
+                
+                // Verificar se há participantes
+                if (comando.participantes && Array.isArray(comando.participantes)) {
+                    logPolling('👥', `${comando.participantes.length} participantes recebidos`);
+                    
+                    // Recarregar dados para garantir que está atualizado
+                    await carregarDados();
+                    
+                    // Aguardar 1 segundo para garantir que os dados foram carregados
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // INICIAR O SORTEIO AUTOMATICAMENTE
+                    try {
+                        // Verificar qual função de sorteio existe
+                        if (typeof girarRoleta === 'function') {
+                            logPolling('🎰', 'Chamando girarRoleta()...');
+                            await girarRoleta();
+                            logPolling('✅', 'Sorteio concluído!');
+                        } else if (typeof girarRoletaAutomatico === 'function') {
+                            logPolling('🎰', 'Chamando girarRoletaAutomatico()...');
+                            await girarRoletaAutomatico();
+                            logPolling('✅', 'Sorteio automático concluído!');
+                        } else if (typeof sortear === 'function') {
+                            logPolling('🎰', 'Chamando sortear()...');
+                            await sortear();
+                            logPolling('✅', 'Sorteio concluído!');
+                        } else {
+                            logPolling('❌', 'Nenhuma função de sorteio encontrada!');
+                            
+                            // Listar funções disponíveis que contenham 'sort' ou 'gir'
+                            const funcoesDisponiveis = Object.keys(window).filter(k => 
+                                typeof window[k] === 'function' && 
+                                (k.toLowerCase().includes('sort') || k.toLowerCase().includes('gir'))
+                            );
+                            logPolling('💡', 'Funções disponíveis:', funcoesDisponiveis.join(', '));
+                        }
+                    } catch (error) {
+                        logPolling('❌', 'Erro ao executar sorteio:', error.message);
+                    }
+                } else {
+                    logPolling('⚠️', 'Comando sem participantes válidos');
+                }
+            } else {
+                logPolling('ℹ️', `Tipo de comando não reconhecido: ${comando.tipo || 'undefined'}`);
+            }
+        }
+
+        // Iniciar polling quando a página carregar
+        function iniciarPolling() {
+            logPolling('🚀', 'Iniciando sistema de polling...');
+            logPolling('⏱️', `Intervalo: ${POLLING_INTERVAL}ms (${POLLING_INTERVAL/1000}s)`);
+            
+            // Primeira verificação imediata
+            verificarComandos();
+            
+            // Verificações periódicas
+            setInterval(verificarComandos, POLLING_INTERVAL);
+            
+            logPolling('✅', 'Polling ativo! Aguardando comandos...');
+        }
+
+        // Reconectar quando a página voltar do background (mobile)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                logPolling('👁️', 'Página voltou ao foreground - verificando comandos...');
+                verificarComandos();
+            }
+        });
+
+        // Reconectar quando a internet voltar
+        window.addEventListener('online', () => {
+            logPolling('📶', 'Internet reconectada - verificando comandos...');
+            verificarComandos();
+        });
+
+        // Aguardar DOM estar pronto antes de iniciar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                logPolling('📄', 'DOM carregado, iniciando polling em 500ms...');
+                setTimeout(iniciarPolling, 500);
+            });
+        } else {
+            logPolling('📄', 'DOM já carregado, iniciando polling em 500ms...');
+            setTimeout(iniciarPolling, 500);
+        }
+
+        logPolling('✅', 'Sistema de polling carregado e pronto!');
+
+        const canvas = document.getElementById('roletaCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let participantes = [];
+        let premios = [];
+        let girando = false;
+        let anguloAtual = 0;
+        let sorteiosComHorarios = []; // Armazena os sorteios com horários
+        let filaPremios = []; // Fila de prêmios a serem sorteados
+
+        const cores = ['#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF'];
+
+        // Configurar canvas responsivo
+        function ajustarCanvas() {
+            const container = canvas.parentElement;
+            const size = Math.min(container.clientWidth, container.clientHeight);
+            canvas.width = size;
+            canvas.height = size;
+            desenharRoleta();
+        }
+
+        window.addEventListener('resize', ajustarCanvas);
+        ajustarCanvas();
+
+        // Carregar participantes e prêmios
+        async function carregarDados() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                
+                // ✅ CONFIG.fetch já retorna JSON diretamente
+                const [dataP, dataR] = await Promise.all([
+                    CONFIG.fetch(CONFIG.API.PARTICIPANTES_ATIVOS),
+                    CONFIG.fetch(CONFIG.API.SORTEIOS_AGENDADOS)
+                ]);
+
+                // ✅ Processar participantes
+                participantes = dataP.participantes || [];
+                console.log('👥 Participantes carregados:', participantes.length);
+
+                // ✅ Processar sorteios
+                console.log('📦 API sorteios-agendados retornou:', dataR);
+                
+                const listaSorteios = Array.isArray(dataR) ? dataR : (dataR.sorteios || []);
+                console.log('📋 Lista de sorteios ANTES do filtro:', listaSorteios);
+                
+                // ✅ FILTRAR APENAS OS SORTEIOS ATIVOS NO HORÁRIO ATUAL
+                const agora = new Date();
+                
+                // 🆕 USAR TIMEZONE DE SÃO PAULO
+                const agoraEmSP = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+                
+                const ano = agoraEmSP.getFullYear();
+                const mes = String(agoraEmSP.getMonth() + 1).padStart(2, '0');
+                const dia = String(agoraEmSP.getDate()).padStart(2, '0');
+                const dataHoje = `${ano}-${mes}-${dia}`; // YYYY-MM-DD
+                
+                const horaAtual = String(agoraEmSP.getHours()).padStart(2, '0') + ':' + 
+                                String(agoraEmSP.getMinutes()).padStart(2, '0'); // HH:MM
+                
+                console.log('🕐 Data atual (SP):', dataHoje);
+                console.log('🕐 Hora atual (SP):', horaAtual);
+                
+                const sorteiosAtivos = listaSorteios.filter(sorteio => {
+                    if (sorteio.status !== 'pendente') {
+                        console.log('❌ Sorteio ignorado (status):', sorteio.id, sorteio.status);
+                        return false;
+                    }
+                    
+                    if (sorteio.data_sorteio !== dataHoje) {
+                        console.log('❌ Sorteio ignorado (data):', sorteio.id, sorteio.data_sorteio, '!=', dataHoje);
+                        return false;
+                    }
+                    
+                    if (sorteio.hora_inicio_sorteio > horaAtual) {
+                        console.log('❌ Sorteio ignorado (ainda não começou):', sorteio.id, sorteio.hora_inicio_sorteio);
+                        return false;
+                    }
+                    
+                    if (sorteio.hora_fim_sorteio < horaAtual) {
+                        console.log('❌ Sorteio ignorado (já terminou):', sorteio.id, sorteio.hora_fim_sorteio);
+                        return false;
+                    }
+                    
+                    console.log('✅ Sorteio ATIVO:', sorteio.id, sorteio.hora_inicio_sorteio, '-', sorteio.hora_fim_sorteio);
+                    return true;
+                });
+                
+                console.log(`📊 Total de sorteios: ${listaSorteios.length}`);
+                console.log(`✅ Sorteios ativos agora: ${sorteiosAtivos.length}`);
+                
+                // 🆕 PROCESSAR PRÊMIOS CORRETAMENTE
+                const premiosMap = new Map();
+                const todosPremiosComHorario = [];
+                
+                sorteiosAtivos.forEach(sorteio => {
+                    console.log('🔍 Processando sorteio:', sorteio);
+                    
+                    let premiosDistribuicao = [];
+                    
+                    if (typeof sorteio.premios_distribuicao === 'string') {
+                        try {
+                            premiosDistribuicao = JSON.parse(sorteio.premios_distribuicao);
+                        } catch (e) {
+                            console.error('❌ Erro ao fazer parse:', e);
+                        }
+                    } else if (Array.isArray(sorteio.premios_distribuicao)) {
+                        premiosDistribuicao = sorteio.premios_distribuicao;
+                    }
+                    
+                    console.log('🎁 Prêmios da distribuição:', premiosDistribuicao);
+                    
+                    // 🆕 ARMAZENAR TODOS OS PRÊMIOS COM HORÁRIO
+                    premiosDistribuicao.forEach(item => {
+                        if (item.premio_nome) {
+                            const premioObj = {
+                                id: item.premio_id || 0,
+                                nome: item.premio_nome,
+                                horario_inicio: item.horario_inicio,
+                                horario_fim: item.horario_fim
+                            };
+                            
+                            // Adicionar ao mapa (sem duplicatas)
+                            if (!premiosMap.has(item.premio_nome)) {
+                                premiosMap.set(item.premio_nome, premioObj);
+                            }
+                            
+                            // Adicionar à lista completa (com horários)
+                            todosPremiosComHorario.push(premioObj);
+                        }
+                    });
+                });
+                
+                premios = Array.from(premiosMap.values());
+                console.log('✅ Prêmios únicos extraídos:', premios);
+                console.log('📋 Todos prêmios com horário:', todosPremiosComHorario);
+
+                // Carregar fila salva ou criar nova
+                carregarFilaDoStorage();
+
+                // Se a fila está vazia ou desatualizada, criar nova
+                if (filaPremios.length === 0 || !filaEstaAtualizada(premios, filaPremios)) {
+                    filaPremios = [...premios];
+                    salvarFilaNoStorage();
+                    console.log('🆕 Nova fila criada:', filaPremios.map(p => p.nome));
+                }
+
+                // 🆕 ARMAZENAR LISTA COMPLETA COM HORÁRIOS
+                sorteiosComHorarios = todosPremiosComHorario;
+                console.log('📦 Prêmios com horários armazenados:', sorteiosComHorarios);
+
+                atualizarInfo();
+                desenharRoleta();
+
+                // 🆕 GIRAR AUTOMATICAMENTE SE FOR SORTEIO AUTOMÁTICO
+                if (isAutoSorteio && !girando && participantes.length > 0 && filaPremios.length > 0) {
+                    console.log('⏳ Sorteio automático detectado! Iniciando em 2 segundos...');
+                    setTimeout(() => {
+                        girarRoleta();
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados:', error);
+                console.error('Stack trace:', error.stack);
+                alert('Erro ao carregar dados. Recarregue a página.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function atualizarInfo() {
+            // Atualizar lista de prêmios no card lateral
+            atualizarListaPremios();
+            
+            // Iniciar rotação de prêmios no título
+            iniciarRotacaoPremios();
+        }
+
+        function atualizarListaPremios() {
+            const container = document.getElementById('listaPremios');
+            
+            if (filaPremios.length === 0) {
+                container.innerHTML = '<div class="sem-premios">Nenhum prêmio agendado</div>';
+                return;
+            }
+            
+            // Mostrar a fila na ordem (primeiro que será sorteado aparece em cima)
+            container.innerHTML = filaPremios.map((p, index) => 
+                `<div class="premio-item ${index === 0 ? 'proximo-premio' : ''}">${p.nome}</div>`
+            ).join('');
+        }
+
+        function iniciarRotacaoPremios() {
+            const titulo = document.getElementById('tituloRoleta');
+            
+            // Inicializar fila se estiver vazia
+            if (filaPremios.length === 0 && premios.length > 0) { 
+                filaPremios = [...premios];
+                salvarFilaNoStorage();
+            }
+            
+            if (filaPremios.length === 0) {
+                titulo.innerHTML = ' Aguardando prêmios agendados ';
+                return;
+            }
+            
+            // Mostrar o primeiro da fila
+            const proximoPremio = filaPremios[0];
+            titulo.innerHTML = ` <span class="premio-rotativo">${proximoPremio.nome}</span> `;
+        }
+
+        function moverPremioParaFinalDaFila() {
+            if (filaPremios.length === 0) return;
+            
+            // Remove o primeiro e adiciona no final
+            const premioSorteado = filaPremios.shift();
+            filaPremios.push(premioSorteado);
+            
+            // Salvar fila atualizada
+            salvarFilaNoStorage();
+            
+            // Atualizar visualmente
+                atualizarListaPremios();
+                iniciarRotacaoPremios();
+                
+                console.log('🔄 Fila atualizada:', filaPremios.map(p => p.nome));
+            }
+
+            function salvarFilaNoStorage() {
+                try {
+                    localStorage.setItem('filaPremios', JSON.stringify(filaPremios));
+                } catch (e) {
+                    console.error('Erro ao salvar fila:', e);
+                }
+            }
+
+            function carregarFilaDoStorage() {
+                try {
+                    const filaSalva = localStorage.getItem('filaPremios');
+                    if (filaSalva) {
+                        filaPremios = JSON.parse(filaSalva);
+                        console.log('📂 Fila carregada do storage:', filaPremios.map(p => p.nome));
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar fila:', e);
+                    filaPremios = [];
+                }
+            }
+
+            function filaEstaAtualizada(premiosAtuais, filaAtual) {
+                // Verificar se a fila tem todos os prêmios atuais
+                const nomesAtuais = premiosAtuais.map(p => p.nome).sort();
+                const nomesFila = filaAtual.map(p => p.nome).sort();
+                
+                if (nomesAtuais.length !== nomesFila.length) return false;
+                
+                return nomesAtuais.every((nome, index) => nome === nomesFila[index]);
+            }
+                    
+                    function desenharRoleta() {
+                        // ✅ ADICIONAR ESTES LOGS NO INÍCIO DA FUNÇÃO
+                        console.log('🎨 desenharRoleta() chamada');
+                        console.log('👥 Participantes disponíveis:', participantes.length);
+                        console.log('📋 Lista de participantes:', participantes);
+                        
+                        // Controlar exibição da logo/mensagem
+                        const logoRoleta = document.getElementById('logoRoleta');
+                        const mensagemAguardando = document.getElementById('mensagemAguardando');
+                        
+                        // ✅ VALIDAÇÃO: Garantir que o canvas tem tamanho válido
+                        if (!canvas.width || !canvas.height || canvas.width < 20 || canvas.height < 20) {
+                            console.warn('⚠️ Canvas com tamanho inválido, ignorando desenho');
+                            return;
+                        }
+                        
+                        if (participantes.length === 0) {
+                            console.log('⚠️ Nenhum participante - mostrando mensagem');
+                            ctx.fillStyle = '#ddd';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                            // Mostrar mensagem, esconder logo
+                            logoRoleta.style.display = 'none';
+                            mensagemAguardando.style.display = 'block';
+                            return;
+                        } else {
+                            console.log('✅ Desenhando roleta com', participantes.length, 'participantes');
+                            // Mostrar logo, esconder mensagem
+                            logoRoleta.style.display = 'block';
+                            mensagemAguardando.style.display = 'none';
+                        }
+
+                        const centerX = canvas.width / 2;
+                        const centerY = canvas.height / 2;
+                        
+                        // ✅ CORREÇÃO CRÍTICA: Garantir que o raio nunca seja negativo
+                        const radius = Math.max(20, canvas.width / 2 - 10);
+                        
+                        const sliceAngle = (Math.PI * 2) / participantes.length;
+
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        participantes.forEach((participante, i) => {
+                            const startAngle = anguloAtual + sliceAngle * i;
+                            const endAngle = startAngle + sliceAngle;
+
+                            // Desenhar fatia
+                            ctx.beginPath();
+                            ctx.moveTo(centerX, centerY);
+                            
+                            // ✅ AGORA O RADIUS NUNCA SERÁ NEGATIVO
+                            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                            ctx.closePath();
+                            
+                            // Adicionar transparência (30% de opacidade)
+                            const corBase = cores[i % cores.length];
+                            ctx.fillStyle = corBase + '4D'; // 4D = 30% de opacidade em hexadecimal
+                            ctx.fill();
+
+                            // ✅ DESENHAR TEXTO - ADICIONAR LOGS AQUI
+                            ctx.save();
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate(startAngle + sliceAngle / 2);
+                            ctx.textAlign = 'right';
+
+                            // Texto em bordô
+                            ctx.fillStyle = '#8B0000';
+
+                            // Ajustar tamanho da fonte baseado no tamanho do canvas
+                            const fontSize = Math.max(10, Math.floor(canvas.width * 0.032));
+                            ctx.font = `bold ${fontSize}px Montserrat`;
+                            ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                            ctx.shadowBlur = 3;
+                            ctx.shadowOffsetX = 1;
+                            ctx.shadowOffsetY = 1;
+
+                            const primeiroNome = participante.nome.split(' ')[0];
+                            
+                            console.log(`✏️ Desenhando nome na fatia ${i}:`, primeiroNome);
+                            
+                            // ✅ VALIDAÇÃO: Garantir que o texto não será desenhado fora do canvas
+                            const posicaoTexto = Math.max(30, radius - 20);
+                            ctx.fillText(primeiroNome, posicaoTexto, 5);
+
+                            ctx.restore();
+                        });
+                        
+                        console.log('✅ Roleta desenhada com sucesso!');
+                    }
+
+                // ============================================
+                // SUBSTITUA A FUNÇÃO girarRoleta() ATUAL
+                // POR ESTA VERSÃO CORRIGIDA
+                // ============================================
+
+                async function girarRoleta() {
+                    // Garantir que a logo está visível durante o giro
+                    document.getElementById('logoRoleta').style.display = 'block';
+                    document.getElementById('mensagemAguardando').style.display = 'none';
+                    
+                    if (girando) {
+                        console.log('⚠️ Roleta já está girando, ignorando comando...');
+                        return;
+                    }
+                    
+                    if (participantes.length === 0) {
+                        console.error('❌ Ainda não há participantes cadastrados!');
+                        return;
+                    }
+                    
+                    if (premios.length === 0) {
+                        console.error('❌ Não há prêmios disponíveis!');
+                        return;
+                    }
+
+                    console.log('🎰 Iniciando sorteio da roleta...');
+                    console.log('👥 Total de participantes:', participantes.length);
+                    console.log('🎁 Prêmios disponíveis:', premios.length);
+
+                    girando = true;
+                    
+                    // ❌ REMOVER ESTA LINHA QUE CAUSAVA O ERRO:
+                    // document.getElementById('btnGirar').disabled = true;
+                    
+                    document.getElementById('resultado').classList.remove('ativo');
+
+                    // Sortear vencedor
+                    const indiceVencedor = Math.floor(Math.random() * participantes.length);
+                    const vencedor = participantes[indiceVencedor];
+
+                    console.log('🎯 Vencedor sorteado:', vencedor.nome);
+
+                    // PEGAR O PRIMEIRO PRÊMIO DA FILA (não aleatório!)
+                    const premioSorteado = filaPremios[0];
+
+                    console.log('🎁 Prêmio sorteado:', premioSorteado.nome);
+
+                    // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+                    const sliceAngle = (Math.PI * 2) / participantes.length;
+
+                    // Ângulo do vencedor em relação à posição inicial
+                    const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+
+                    // A seta está no topo (ângulo = -PI/2 ou 270 graus)
+                    // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
+                    const anguloSeta = -Math.PI / 2;
+
+                    // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
+                    const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+                    const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+
+                    // Animação
+                    const duracao = 5000;
+                    const inicio = Date.now();
+
+                    function animar() {
+                        const agora = Date.now();
+                        const progresso = Math.min((agora - inicio) / duracao, 1);
+                        
+                        // Easing (desaceleração)
+                        const easeOut = 1 - Math.pow(1 - progresso, 3);
+                        
+                        anguloAtual = anguloFinal * easeOut;
+                        desenharRoleta();
+
+                        if (progresso < 1) {
+                            requestAnimationFrame(animar);
+                        } else {
+                            console.log('✅ Animação da roleta concluída!');
+                            mostrarResultado(vencedor, premioSorteado);
+                        }
+                    }
+
+                    animar();
+                }
+
+                async function mostrarResultado(vencedor, premio) {
+                    console.log('🎯 mostrarResultado recebeu:');
+                    console.log('  Vencedor:', vencedor);
+                    console.log('  Premio:', premio);
+                    
+                    document.getElementById('nomeGanhador').textContent = vencedor.nome;
+                    document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
+                    document.getElementById('resultado').classList.add('ativo');
+
+                    // 🎯 REGISTRAR GANHADOR DA ROLETA
+                    try {
+                        const dadosRegistro = {
+                            participante: {
+                                nome: String(vencedor.nome || ''),
+                                email: String(vencedor.email || ''),
+                                whatsapp: String(vencedor.whatsapp || '')
+                            },
+                            premio: {
+                                id: Number(premio.id) || 0,
+                                nome: String(premio.nome || 'Prêmio')
+                            },
+                            tipo_sorteio: 'roleta'
+                        };
+                        
+                        console.log('📤 Enviando registro:', JSON.stringify(dadosRegistro, null, 2));
+                        
+                        const response = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify(dadosRegistro)
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Ganhador da roleta registrado com sucesso!', data);
+                        } else {
+                            const errorText = await response.text();
+                            console.error('❌ Erro HTTP', response.status, ':', errorText);
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ Erro ao registrar ganhador:', error);
+                    }
+
+                    // 🆕 ENVIAR RESULTADO PARA O ADMIN (SE VEIO DO SORTEIO AUTOMÁTICO)
+                    if (isAutoSorteio && window.opener) {
+                        console.log('📤 Enviando resultado para o admin...');
+                        
+                        window.opener.postMessage({
+                            type: 'SORTEIO_CONCLUIDO',
+                            vencedor: {
+                                id: vencedor.id,
+                                nome: vencedor.nome,
+                                email: vencedor.email,
+                                whatsapp: vencedor.whatsapp
+                            },
+                            premio_id: premioId,
+                            premio_nome: premioNome
+                        }, window.location.origin);
+                        
+                        console.log('✅ Resultado enviado! Fechando em 5 segundos...');
+                        
+                        // Fechar a janela após 5 segundos
+                        setTimeout(() => {
+                            window.close();
+                        }, 5000);
+                        
+                        return; // Não continua o resto do código
+                    }
+
+                    // Enviar resultado para o parent (modo iframe - manter compatibilidade)
+                    try {
+                        window.parent.postMessage({
+                            action: 'resultadoRoleta',
+                            vencedor: {
+                                nome: vencedor.nome,
+                                email: vencedor.email
+                            },
+                            premio: {
+                                nome: premio.nome
+                            }
+                        }, '*');
+                    } catch (e) {
+                        console.error('Erro no postMessage:', e);
+                    }
+
+                    setTimeout(() => {
+                        moverPremioParaFinalDaFila();
+                        girando = false;
+                    }, 2000);
+                }
+
+        // ========================================
+        // ADICIONAR NO FINAL DO <script> da roleta.html
+        // ANTES de "carregarDados();"
+        // ========================================
+
+        // 
+        // Verificar configuração do sorteio automático
+        async function verificarSorteioAutomatico() {
+            console.log('🔄 Verificando sorteio automático...');
+            
+            try {
+                const sorteios = await CONFIG.fetch(CONFIG.API.SORTEIOS_AGENDADOS);
+                console.log('📊 Sorteios agendados:', sorteios);
+                
+                if (!Array.isArray(sorteios) || sorteios.length === 0) {
+                    console.log('ℹ️ Nenhum sorteio agendado');
+                    return;
+                }
+                
+                const sorteioAtivo = sorteios.find(s => s.ativo === 1);
+                
+                if (!sorteioAtivo) {
+                    console.log('ℹ️ Nenhum sorteio ativo encontrado');
+                    return;
+                }
+                
+                console.log('✅ Sorteio ativo encontrado:', sorteioAtivo);
+                
+                // Verificar se atingiu o número de participantes
+                const participantes = await CONFIG.fetch(CONFIG.API.PARTICIPANTES);
+                
+                const totalParticipantes = participantes.filter(p => p.sorteado === 0).length;
+                
+                console.log(`👥 Participantes: ${totalParticipantes}/${sorteioAtivo.participantes_necessarios}`);
+                
+                if (totalParticipantes >= sorteioAtivo.participantes_necessarios) {
+                    console.log('🎉 Número de participantes atingido! Iniciando sorteio...');
+                    await realizarSorteio(sorteioAtivo.id);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao verificar sorteio automático:', error);
+            }
+        }
+
+        // Função de girar automático (igual ao manual mas chama a API)
+        async function girarRoletaAutomatico() {
+            // Garantir que a logo está visível durante o giro
+            document.getElementById('logoRoleta').style.display = 'block';
+            document.getElementById('mensagemAguardando').style.display = 'none';
+            
+            if (girando) return;
+            if (participantes.length === 0) {
+                console.log('❌ Nenhum participante disponível');
+                return;
+            }
+            if (filaPremios.length === 0) {
+                console.log('❌ Nenhum prêmio disponível');
+                return;
+            }
+
+            girando = true;
+            document.getElementById('resultado').classList.remove('ativo');
+            
+            try {
+                // CHAMAR API DE SORTEIO AUTOMÁTICO
+                console.log('📡 Chamando API de sorteio automático...');
+                const resultado = await CONFIG.fetch(CONFIG.API.EXECUTAR_SORTEIO_AUTOMATICO, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                console.log('✅ Resultado do sorteio:', resultado);
+
+                const vencedor = resultado.resultado.participante;
+                const premioSorteado = resultado.resultado.premio;
+                
+                // Encontrar índice do vencedor na lista de participantes
+                const indiceVencedor = participantes.findIndex(p => 
+                    p.email === vencedor.email || p.nome === vencedor.nome
+                );
+                
+                if (indiceVencedor === -1) {
+                    console.error('❌ Vencedor não encontrado na lista');
+                    girando = false;
+                    return;
+                }
+
+                // Calcular ângulo final
+                // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+                const sliceAngle = (Math.PI * 2) / participantes.length;
+
+                // Ângulo do vencedor em relação à posição inicial
+                const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+
+                // A seta está no topo (ângulo = -PI/2 ou 270 graus)
+                // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
+                const anguloSeta = -Math.PI / 2;
+
+                // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
+                const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+                const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+
+                // Animação
+                const duracao = 5000;
+                const inicio = Date.now();
+
+                function animar() {
+                    const agora = Date.now();
+                    const progresso = Math.min((agora - inicio) / duracao, 1);
+                    
+                    // Easing (desaceleração)
+                    const easeOut = 1 - Math.pow(1 - progresso, 3);
+                    
+                    anguloAtual = anguloFinal * easeOut;
+                    desenharRoleta();
+
+                    if (progresso < 1) {
+                        requestAnimationFrame(animar);
+                    } else {
+                        mostrarResultadoAutomatico(vencedor, premioSorteado);
+                    }
+                }
+
+                animar();
+                
+            } catch (error) {
+                console.error('❌ Erro ao executar sorteio automático:', error);
+                girando = false;
+            }
+        }
+
+        // Mostrar resultado do sorteio automático
+        async function mostrarResultadoAutomatico(vencedor, premio) {
+            console.log('🎉 SORTEIO AUTOMÁTICO CONCLUÍDO!');
+            console.log('  Vencedor:', vencedor.nome);
+            console.log('  Premio:', premio.nome);
+            
+            document.getElementById('nomeGanhador').textContent = vencedor.nome;
+            document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
+            document.getElementById('resultado').classList.add('ativo');
+
+            // Mover prêmio para o final da fila
+            moverPremioParaFinalDaFila();
+            
+            // Recarregar participantes (o vencedor já foi marcado como sorteado pela API)
+            await carregarDados();
+            
+            // Aguardar 5 segundos e resetar
+            setTimeout(() => {
+                document.getElementById('resultado').classList.remove('ativo');
+                girando = false;
+                
+                // Verificar novamente após 5 segundos
+                setTimeout(verificarSorteioAutomatico, 5000);
+            }, 5000);
+        }
+
+        // Iniciar verificação periódica (a cada 10 segundos)
+        setInterval(verificarSorteioAutomatico, 10000);
+
+        // Verificar imediatamente ao carregar
+        setTimeout(verificarSorteioAutomatico, 3000);    
+
+        // Carregar dados ao iniciar
+        carregarDados();
+
+        // Recarregar a cada 30 segundos
+        setInterval(carregarDados, 30000);
+
+        // ============================================
+        // RECEBER SORTEIO AUTOMÁTICO DO PAINEL ADMIN
+        // ============================================
+
+        window.addEventListener('message', async function(event) {
+            console.log('📨 Mensagem recebida:', event.data);
+            
+            // Verificar origem (segurança básica)
+            if (event.origin !== window.location.origin) {
+                console.warn('⚠️ Mensagem de origem não confiável:', event.origin);
+                return;
+            }
+
+            const dados = event.data;
+
+            if (dados.tipo === 'INICIAR_SORTEIO_AUTOMATICO') {
+                console.log('🎰 Sorteio automático recebido do painel admin:', dados);
+
+                const participante = dados.participante;
+                const premio = dados.premio;
+
+                // Validar dados recebidos
+                if (!participante || !premio) {
+                    console.error('❌ Dados inválidos recebidos:', { participante, premio });
+                    return;
+                }
+
+                console.log('✅ Dados validados:', { participante, premio });
+
+                // Aguardar 2 segundos para garantir que a página carregou
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Recarregar participantes para ter certeza que o sorteado está na lista
+                await carregarDados();
+
+                // Aguardar mais 1 segundo após carregar dados
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Verificar se o participante sorteado está na lista
+                const participanteNaLista = participantes.find(p => 
+                    p.id === participante.id || p.email === participante.email || p.nome === participante.nome
+                );
+
+                if (!participanteNaLista) {
+                    console.error('❌ Participante sorteado não está na lista de participantes');
+                    console.log('Participante procurado:', participante);
+                    console.log('Participantes disponíveis:', participantes);
+                    
+                    // Adicionar participante manualmente à lista
+                    participantes.push({
+                        id: participante.id,
+                        nome: participante.nome,
+                        email: participante.email,
+                        whatsapp: participante.whatsapp || ''
+                    });
+                    
+                    console.log('⚠️ Participante adicionado manualmente à lista');
+                    desenharRoleta();
+                }
+
+                console.log('✅ Participante encontrado/adicionado na lista:', participanteNaLista || participante);
+                console.log('🎁 Prêmio a ser mostrado:', premio);
+
+                // Forçar o prêmio na fila (colocar no início)
+                const premioNaFila = filaPremios.find(p => p.id === premio.id || p.nome === premio.nome);
+
+                if (premioNaFila) {
+                    // Remove o prêmio da posição atual
+                    filaPremios = filaPremios.filter(p => p.id !== premio.id && p.nome !== premio.nome);
+                    // Adiciona no início
+                    filaPremios.unshift(premioNaFila);
+                    salvarFilaNoStorage();
+                    atualizarListaPremios();
+                    iniciarRotacaoPremios();
+                    console.log('✅ Prêmio movido para o início da fila');
+                } else {
+                    console.warn('⚠️ Prêmio não encontrado na fila, adicionando manualmente');
+                    filaPremios.unshift({
+                        id: premio.id,
+                        nome: premio.nome
+                    });
+                    salvarFilaNoStorage();
+                    atualizarListaPremios();
+                    iniciarRotacaoPremios();
+                    console.log('✅ Prêmio adicionado manualmente no início da fila');
+                }
+
+                // Aguardar 1 segundo para visualizar a atualização
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // INICIAR O SORTEIO
+                console.log('🎬 Iniciando animação da roleta...');
+                await girarRoletaComResultado(participanteNaLista || participante, premioNaFila || premio);
+            }
+        });
+
+        console.log('✅ Listener de sorteio automático configurado e pronto');
+
+                // Nova função: girar roleta com resultado pré-determinado
+        async function girarRoletaComResultado(vencedor, premio) {
+            if (girando) {
+                console.log('⚠️ Roleta já está girando');
+                return;
+            }
+
+            console.log('🎰 Iniciando animação da roleta');
+            console.log('  Vencedor:', vencedor);
+            console.log('  Prêmio:', premio);
+
+            // Garantir que a logo está visível
+            document.getElementById('logoRoleta').style.display = 'block';
+            document.getElementById('mensagemAguardando').style.display = 'none';
+
+            girando = true;
+            document.getElementById('resultado').classList.remove('ativo');
+
+            // Encontrar o índice do vencedor na lista de participantes
+            const indiceVencedor = participantes.findIndex(p => 
+                p.id === vencedor.id || p.email === vencedor.email || p.nome === vencedor.nome
+            );
+
+            if (indiceVencedor === -1) {
+                console.error('❌ Vencedor não encontrado na lista de participantes');
+                console.log('Vencedor procurado:', vencedor);
+                console.log('Participantes disponíveis:', participantes);
+                girando = false;
+                return;
+            }
+
+            console.log(`✅ Vencedor encontrado no índice ${indiceVencedor}`);
+
+            // Calcular ângulo final para parar no vencedor
+            // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+            const sliceAngle = (Math.PI * 2) / participantes.length;
+                    
+            // Ângulo do vencedor em relação à posição inicial
+            const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+                    
+            // A seta está no topo (ângulo = -PI/2 ou 270 graus)
+            // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
+            const anguloSeta = -Math.PI / 2;
+                    
+            // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
+            const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+            const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+
+            // Animação de rotação
+            const duracao = 5000; // 5 segundos
+            const inicio = Date.now();
+
+            function animar() {
+                const agora = Date.now();
+                const progresso = Math.min((agora - inicio) / duracao, 1);
+
+                // Easing (desaceleração suave)
+                const easeOut = 1 - Math.pow(1 - progresso, 3);
+
+                anguloAtual = anguloFinal * easeOut;
+                desenharRoleta();
+
+                if (progresso < 1) {
+                    requestAnimationFrame(animar);
+                } else {
+                    // Animação concluída, mostrar resultado
+                    console.log('🎉 Animação concluída!');
+                    mostrarResultado(vencedor, premio);
+                }
+            }
+
+            animar();
+        }
+
+        // ============================================
+        // AJUSTE AUTOMÁTICO PARA NOMES LONGOS
+        // ============================================
+
+        // Observar quando o resultado for exibido
+        const observadorResultado = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.classList && mutation.target.classList.contains('resultado')) {
+                    const ganhadorElemento = mutation.target.querySelector('.ganhador');
+                    
+                    if (ganhadorElemento && mutation.target.classList.contains('ativo')) {
+                        const textoGanhador = ganhadorElemento.textContent || '';
+                        const comprimento = textoGanhador.length;
+                        
+                        console.log('📏 Nome do ganhador tem', comprimento, 'caracteres');
+                        
+                        // Se o nome for extremamente longo (mais de 30 caracteres)
+                        if (comprimento > 15) {
+                            ganhadorElemento.classList.add('nome-extra-longo');
+                            console.log('✅ Classe "nome-extra-longo" adicionada');
+                        } else {
+                            ganhadorElemento.classList.remove('nome-extra-longo');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Iniciar observação quando a página carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                const resultadoDiv = document.getElementById('resultado');
+                if (resultadoDiv) {
+                    observadorResultado.observe(resultadoDiv, { 
+                        attributes: true, 
+                        attributeFilter: ['class'] 
+                    });
+                    console.log('👁️ Observador de resultado configurado');
+                }
+            });
+        } else {
+            const resultadoDiv = document.getElementById('resultado');
+            if (resultadoDiv) {
+                observadorResultado.observe(resultadoDiv, { 
+                    attributes: true, 
+                    attributeFilter: ['class'] 
+                });
+                console.log('👁️ Observador de resultado configurado');
+            }
+        }       
+        
+    </script>
+    
+</body>
+</html>
