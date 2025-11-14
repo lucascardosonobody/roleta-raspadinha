@@ -1,0 +1,434 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Banco de dados
+const dbPath = path.join(__dirname, 'sorteios.db');
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('❌ Erro ao conectar ao banco:', err);
+        process.exit(1); // Parar se não conseguir conectar
+    } else {
+        console.log('✅ Conectado ao banco de dados');
+        inicializarBanco();
+    }
+});
+
+// ============================================
+// INICIALIZAÇÃO DO BANCO
+// ============================================
+function inicializarBanco() {
+    console.log('\n🔧 Inicializando banco de dados...\n');
+    
+    db.serialize(() => {
+        // PARTICIPANTES
+        db.run(`
+            CREATE TABLE IF NOT EXISTS participantes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                whatsapp TEXT NOT NULL,
+                chances INTEGER DEFAULT 5,
+                sorteado INTEGER DEFAULT 0,
+                indicado_por INTEGER,
+                data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (indicado_por) REFERENCES participantes(id)
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela participantes:', err);
+            else console.log('✅ Tabela participantes');
+        });
+        
+        // PREMIOS
+        db.run(`
+            CREATE TABLE IF NOT EXISTS premios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo TEXT NOT NULL,
+                nome TEXT NOT NULL,
+                descricao TEXT,
+                valor REAL,
+                imagem TEXT,
+                icone TEXT DEFAULT '🎁',
+                quantidade_disponivel INTEGER DEFAULT 1,
+                probabilidade INTEGER DEFAULT 20,
+                ativo INTEGER DEFAULT 1,
+                data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela premios:', err);
+            else {
+                console.log('✅ Tabela premios');
+                db.get('SELECT COUNT(*) as total FROM premios', (err, row) => {
+                    if (!err && row.total === 0) {
+                        inserirPremiosPadrao();
+                    }
+                });
+            }
+        });
+        
+        // HISTORICO_SORTEIOS
+        db.run(`
+            CREATE TABLE IF NOT EXISTS historico_sorteios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                email TEXT NOT NULL,
+                whatsapp TEXT NOT NULL,
+                premio_id INTEGER,
+                premio_nome TEXT NOT NULL,
+                premio_ganho INTEGER DEFAULT 1,
+                tipo_sorteio TEXT DEFAULT 'cadastro',
+                data_sorteio DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela historico_sorteios:', err);
+            else console.log('✅ Tabela historico_sorteios');
+        });
+        
+        // SORTEIOS_AGENDADOS
+        db.run(`
+            CREATE TABLE IF NOT EXISTS sorteios_agendados (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_sorteio TEXT NOT NULL,
+                hora_inicio_sorteio TEXT DEFAULT '00:00',
+                hora_fim_sorteio TEXT DEFAULT '23:59',
+                premios_distribuicao TEXT,
+                status TEXT DEFAULT 'pendente',
+                created_at TEXT DEFAULT (datetime('now', 'localtime'))
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela sorteios_agendados:', err);
+            else console.log('✅ Tabela sorteios_agendados');
+        });
+        
+        // RASPADINHAS_AGENDADAS
+        db.run(`
+            CREATE TABLE IF NOT EXISTS raspadinhas_agendadas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_raspadinha DATE NOT NULL,
+                hora_inicio TIME NOT NULL,
+                hora_fim TIME NOT NULL,
+                premios_distribuicao TEXT NOT NULL,
+                status TEXT DEFAULT 'pendente',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela raspadinhas_agendadas:', err);
+            else console.log('✅ Tabela raspadinhas_agendadas');
+        });
+        
+        // CONFIGURACOES
+        db.run(`
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chave TEXT UNIQUE NOT NULL,
+                valor TEXT NOT NULL,
+                atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `, (err) => {
+            if (err) console.error('❌ Erro tabela configuracoes:', err);
+            else {
+                console.log('✅ Tabela configuracoes');
+                db.run(`INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES ('sorteio_automatico_ativo', 'false')`);
+                db.run(`INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES ('participantes_necessarios', '10')`);
+            }
+        });
+        
+        console.log('\n✅ Banco de dados pronto!\n');
+    });
+}
+
+function inserirPremiosPadrao() {
+    console.log('📝 Inserindo prêmios padrão...\n');
+    
+    const premios = [
+        ['roleta', 'iPhone 15 Pro', '128GB', 7999.99, '📱'],
+        ['roleta', 'Notebook Gamer', 'RTX 4060', 5999.99, '💻'],
+        ['raspadinha', 'Vale-Compras R$ 100', 'Qualquer loja', 100.00, '🎫'],
+        ['raspadinha', 'Fone Bluetooth', 'Premium', 299.99, '🎧'],
+        ['raspadinha', 'Tente Novamente', 'Não ganhou', 0, '🔄']
+    ];
+    
+    premios.forEach(([tipo, nome, desc, valor, icone]) => {
+        db.run(
+            'INSERT INTO premios (tipo, nome, descricao, valor, icone, ativo) VALUES (?, ?, ?, ?, ?, 1)',
+            [tipo, nome, desc, valor, icone],
+            (err) => {
+                if (!err) console.log(`✅ Prêmio: ${nome}`);
+            }
+        );
+    });
+}
+
+// ============================================
+// ROTAS DA API
+// ============================================
+
+// POST /api/signup - CADASTRO
+app.post('/api/signup', (req, res) => {
+    const { nome, email, whatsapp } = req.body;
+    
+    if (!nome || !email || !whatsapp) {
+        return res.status(400).json({ error: 'Dados incompletos' });
+    }
+    
+    // Verificar se email já existe
+    db.get('SELECT id FROM participantes WHERE email = ?', [email], (err, row) => {
+        if (err) {
+            console.error('❌ Erro ao verificar email:', err);
+            return res.status(500).json({ error: 'Erro ao verificar dados' });
+        }
+        if (row) {
+            return res.status(409).json({ error: 'Email já cadastrado' });
+        }
+        
+        // Verificar se whatsapp já existe
+        db.get('SELECT id FROM participantes WHERE whatsapp = ?', [whatsapp], (err, row) => {
+            if (err) {
+                console.error('❌ Erro ao verificar whatsapp:', err);
+                return res.status(500).json({ error: 'Erro ao verificar dados' });
+            }
+            if (row) {
+                return res.status(409).json({ error: 'WhatsApp já cadastrado' });
+            }
+            
+            // Inserir novo participante
+            db.run(
+                'INSERT INTO participantes (nome, email, whatsapp, chances) VALUES (?, ?, ?, 5)',
+                [nome, email, whatsapp],
+                function(err) {
+                    if (err) {
+                        console.error('❌ Erro ao cadastrar:', err);
+                        return res.status(500).json({ error: 'Erro ao cadastrar' });
+                    }
+                    
+                    console.log(`✅ Novo participante: ${nome} (ID: ${this.lastID})`);
+                    
+                    res.json({ 
+                        success: true, 
+                        user: { 
+                            id: this.lastID, 
+                            nome, 
+                            email, 
+                            whatsapp,
+                            chances: 5
+                        },
+                        participante_id: this.lastID
+                    });
+                }
+            );
+        });
+    });
+});
+
+// POST /api/indicacoes
+app.post('/api/indicacoes', async (req, res) => {
+    console.log('📥 Recebendo indicações:', req.body);
+    
+    const { indicante_id, indicacoes } = req.body;
+    
+    if (!indicante_id || !indicacoes || !Array.isArray(indicacoes)) {
+        return res.status(400).json({ error: 'Dados inválidos' });
+    }
+    
+    let indicacoesSalvas = 0;
+    let erros = [];
+    
+    try {
+        for (const indicacao of indicacoes) {
+            const { nome, whatsapp, email } = indicacao;
+            
+            // Verificar duplicados
+            const existente = await new Promise((resolve, reject) => {
+                db.get(
+                    'SELECT id FROM participantes WHERE email = ? OR whatsapp = ?',
+                    [email, whatsapp],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row);
+                    }
+                );
+            });
+            
+            if (existente) {
+                erros.push(`${nome} já cadastrado`);
+                continue;
+            }
+            
+            // Inserir indicado
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO participantes (nome, whatsapp, email, chances, indicado_por) VALUES (?, ?, ?, 5, ?)',
+                    [nome, whatsapp, email, indicante_id],
+                    function(err) {
+                        if (err) {
+                            erros.push(`Erro ao salvar ${nome}`);
+                            reject(err);
+                        } else {
+                            console.log(`✅ Indicado: ${nome}`);
+                            indicacoesSalvas++;
+                            resolve();
+                        }
+                    }
+                );
+            });
+        }
+        
+        // Adicionar chances ao indicante
+        if (indicacoesSalvas > 0) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE participantes SET chances = chances + ? WHERE id = ?',
+                    [indicacoesSalvas, indicante_id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+            
+            console.log(`✅ ${indicacoesSalvas} indicações salvas!`);
+            
+            res.json({
+                success: true,
+                message: `${indicacoesSalvas} indicação(ões) salva(s)!`,
+                indicacoes_salvas: indicacoesSalvas,
+                chances_ganhas: indicacoesSalvas,
+                erros: erros.length > 0 ? erros : null
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: 'Nenhuma indicação foi salva',
+                erros
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        res.status(500).json({ error: 'Erro ao processar indicações' });
+    }
+});
+
+// GET /api/participantes
+app.get('/api/participantes', (req, res) => {
+    db.all('SELECT * FROM participantes ORDER BY data_cadastro DESC', (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar participantes:', err);
+            return res.status(500).json({ error: 'Erro ao buscar participantes' });
+        }
+        res.json(rows || []);
+    });
+});
+
+// GET /api/premios
+app.get('/api/premios', (req, res) => {
+    db.all('SELECT * FROM premios WHERE ativo = 1 ORDER BY id', (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar prêmios:', err);
+            return res.status(500).json({ error: 'Erro ao buscar prêmios' });
+        }
+        res.json(rows || []);
+    });
+});
+
+// POST /api/registrar-sorteio
+app.post('/api/registrar-sorteio', (req, res) => {
+    const { participante, premio, tipo_sorteio } = req.body;
+    
+    if (!participante || !premio) {
+        return res.status(400).json({ error: 'Dados incompletos' });
+    }
+    
+    db.run(
+        'INSERT INTO historico_sorteios (nome, email, whatsapp, premio_id, premio_nome, premio_ganho, tipo_sorteio) VALUES (?, ?, ?, ?, ?, 1, ?)',
+        [participante.nome, participante.email, participante.whatsapp || '', premio.id || 0, premio.nome, tipo_sorteio || 'cadastro'],
+        function(err) {
+            if (err) {
+                console.error('❌ Erro ao registrar sorteio:', err);
+                return res.status(500).json({ error: 'Erro ao registrar' });
+            }
+            
+            console.log(`✅ Sorteio registrado: ${participante.nome} ganhou ${premio.nome}`);
+            res.json({ success: true, sorteio_id: this.lastID });
+        }
+    );
+});
+
+// GET /api/historico-sorteios
+app.get('/api/historico-sorteios', (req, res) => {
+    db.all('SELECT * FROM historico_sorteios ORDER BY data_sorteio DESC', (err, rows) => {
+        if (err) {
+            console.error('❌ Erro ao buscar histórico:', err);
+            return res.status(500).json({ error: 'Erro ao buscar histórico' });
+        }
+        res.json(rows || []);
+    });
+});
+
+// DELETE /api/participantes/:id
+app.delete('/api/participantes/:id', (req, res) => {
+    db.run('DELETE FROM participantes WHERE id = ?', [req.params.id], function(err) {
+        if (err) {
+            console.error('❌ Erro ao excluir:', err);
+            return res.status(500).json({ error: 'Erro ao excluir' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// ============================================
+// ROTAS DE PÁGINAS
+// ============================================
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'final.html'));
+});
+
+app.get('/admin/dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'admin', 'dashboard.html'));
+});
+
+// ============================================
+// TRATAMENTO DE ERROS
+// ============================================
+
+app.use((err, req, res, next) => {
+    console.error('❌ Erro no servidor:', err);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
+// ============================================
+// INICIAR SERVIDOR
+// ============================================
+
+app.listen(PORT, () => {
+    console.log(`\n🚀 Servidor rodando em http://localhost:${PORT}`);
+    console.log(`📊 Dashboard: http://localhost:${PORT}/projeito/dashboard.html`);
+    console.log(`📊 paineladm: http://localhost:${PORT}/projeito/paineladm.html`);
+    console.log(`📊 historico: http://localhost:${PORT}/projeito/historico.html`);
+    console.log(`✅ roleta: http://localhost:${PORT}/projeito/final.html`);
+    console.log(`\n✅ Pronto para receber requisições!\n`);
+});
+
+// Tratamento de shutdown
+process.on('SIGINT', () => {
+    console.log('\n🔴 Encerrando servidor...');
+    db.close((err) => {
+        if (err) {
+            console.error('❌ Erro ao fechar banco:', err);
+        } else {
+            console.log('✅ Banco de dados fechado');
+        }
+        process.exit(0);
+    });
+});
