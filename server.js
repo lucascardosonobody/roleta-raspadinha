@@ -6,7 +6,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
 
 // ==== LOGIN DO ADMIN ====
 const ADMIN_USER = 'admin';
@@ -146,13 +147,13 @@ app.get('/logout', (req, res) => {
 // Aplicar middleware ANTES de servir arquivos estáticos
 app.use(protegerAdmin);
 
-// depois disso, servimos os arquivos estáticos
+// Logo após a linha do express.static, adicione:
 app.use(express.static(__dirname));
 
 // Rota principal - redirecionar para final.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'final.html'));
-
+});
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
