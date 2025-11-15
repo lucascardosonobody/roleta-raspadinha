@@ -144,6 +144,12 @@ app.get('/logout', (req, res) => {
     });
 });
 
+// 🔹 Home pública — abre o final.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'final.html'));
+});
+
+
 // Aplicar middleware ANTES de servir arquivos estáticos
 app.use(protegerAdmin);
 
