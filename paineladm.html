@@ -1477,10 +1477,6 @@ function renderizarParticipantes() {
                     .then(data => {
                         console.log('📦 Prêmios carregados:', data);
                         premios = data || [];
-                    })
-                    .then(data => {
-                        console.log('📦 Prêmios carregados:', data);
-                        premios = data || [];
                         renderizarPremios();
                         atualizarStats();
                     })
