@@ -569,12 +569,19 @@
             if (!dataISO) return '--:--';
             
             try {
-                const partes = dataISO.replace('T', ' ').replace('Z', '').split(' ');
-                if (partes.length < 2) return '--:--';
-                const [hora, minuto] = partes[1].split(':');
+                // Criar objeto Date
+                const data = new Date(dataISO);
+                
+                // 🔧 SUBTRAIR 3 HORAS (ajuste para Brasília)
+                data.setHours(data.getHours() - 3);
+                
+                // Extrair hora e minuto já ajustados
+                const hora = String(data.getHours()).padStart(2, '0');
+                const minuto = String(data.getMinutes()).padStart(2, '0');
+                
                 return `${hora}:${minuto}`;
             } catch (error) {
-                console.error('Erro ao formatar hora:', error, dataISO);
+                console.error('❌ Erro ao formatar hora:', error, dataISO);
                 return '--:--';
             }
         }
