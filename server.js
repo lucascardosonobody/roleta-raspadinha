@@ -91,6 +91,18 @@ function protegerAdmin(req, res, next) {
         sessionID: req.sessionID || 'sem sessão'
     });
 
+    const paginasPublicas = [
+        '/',
+        '/final.html',
+        '/login.html',
+        '/testeroleta.html',
+        '/login2.html'
+    ];
+
+    if (paginasPublicas.includes(path) || path.startWich('/api/')) {
+        return next();
+    }
+
     // Lista de páginas que PRECISAM de login
     const paginasProtegidas = [
         '/dashboard.html',
