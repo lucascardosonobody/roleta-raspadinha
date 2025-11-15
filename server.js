@@ -91,6 +91,7 @@ function protegerAdmin(req, res, next) {
         sessionID: req.sessionID || 'sem sessão'
     });
 
+    // 🆕 Lista de páginas PÚBLICAS (não precisam de login)
     const paginasPublicas = [
         '/',
         '/final.html',
@@ -99,7 +100,8 @@ function protegerAdmin(req, res, next) {
         '/login2.html'
     ];
 
-    if (paginasPublicas.includes(path) || path.startWich('/api/')) {
+    // Se for página pública, libera sem verificar login
+    if (paginasPublicas.includes(path) || path.startsWith('/api/')) {
         return next();
     }
 
@@ -113,11 +115,9 @@ function protegerAdmin(req, res, next) {
         '/raspadinha.html'
     ];
 
-    // Se for página protegida e NÃO estiver logado
     if (paginasProtegidas.includes(path)) {
         if (!req.session || !req.session.adminLogado) {
             console.log('❌ Acesso negado - redirecionando para login');
-            // 🆕 ADICIONAR A PÁGINA ORIGINAL NO REDIRECT
             return res.redirect(`/login.html?redirect=${encodeURIComponent(path)}`);
         }
         
