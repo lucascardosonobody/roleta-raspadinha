@@ -147,7 +147,12 @@ app.get('/logout', (req, res) => {
 app.use(protegerAdmin);
 
 // depois disso, servimos os arquivos estáticos
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(__dirname));
+
+// Rota principal - redirecionar para final.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'final.html'));
+
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
