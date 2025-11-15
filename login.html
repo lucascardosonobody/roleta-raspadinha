@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Sorteios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <!-- Logo/Título -->
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🎰</div>
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Sistema de Sorteios
+            </h1>
+            <p class="text-gray-600 mt-2">Área Administrativa</p>
+        </div>
+
+        <!-- Mensagem de erro (se houver) -->
+        <div id="mensagemErro" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-center">
+            ❌ Usuário ou senha incorretos
+        </div>
+
+        <!-- Formulário -->
+<form id="formLogin" method="POST">
+    <div class="mb-4">
+        <label class="block text-gray-700 font-semibold mb-2" for="usuario">
+            👤 Usuário
+        </label>
+        <input 
+            type="text" 
+            id="usuario" 
+            name="usuario"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Digite seu usuário"
+            required
+            autofocus
+        >
+    </div>
+
+    <div class="mb-6">
+        <label class="block text-gray-700 font-semibold mb-2" for="senha">
+            🔒 Senha
+        </label>
+        <input 
+            type="password" 
+            id="senha" 
+            name="senha"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Digite sua senha"
+            required
+        >
+    </div>
+
+    <button 
+        type="submit"
+        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition transform hover:scale-105"
+    >
+        🚀 Entrar
+    </button>
+</form>
+
+        <!-- Link para página pública -->
+        <div class="text-center mt-6">
+            <a href="/final.html" class="text-purple-600 hover:text-purple-800 text-sm font-semibold">
+                ← Voltar para a página pública
+            </a>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="text-center mt-6 text-gray-600 text-sm">
+            <p>🔐 Acesso restrito a administradores</p>
+        </div>
+    </div>
+
+    <script>
+        // Verificar se há erro na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('erro') === '1') {
+            const mensagemErro = document.getElementById('mensagemErro');
+            const loginCard = document.querySelector('.login-card');
+            
+            mensagemErro.classList.remove('hidden');
+            loginCard.classList.add('shake');
+            
+            setTimeout(() => {
+                loginCard.classList.remove('shake');
+            }, 500);
+            
+            window.history.replaceState({}, '', '/login.html');
+        }
+
+        // Prevenir múltiplos submits
+        document.getElementById('formLogin').addEventListener('submit', function(e) {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '⏳ Entrando...';
+        });
+
+        // 🆕 SISTEMA DE REDIRECT DINÂMICO
+(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirect = urlParams.get('redirect');
+    const form = document.getElementById('formLogin');
+    
+    // Se tem redirect, adicionar na action do form
+    if (redirect) {
+        form.action = `/login?redirect=${encodeURIComponent(redirect)}`;
+        console.log('📍 Redirect configurado para:', redirect);
+    } else {
+        form.action = '/login';
+    }
+    
+    // Verificar erro
+    if (urlParams.get('erro') === '1') {
+        const mensagemErro = document.getElementById('mensagemErro');
+        const loginCard = document.querySelector('.login-card');
+        
+        mensagemErro.classList.remove('hidden');
+        loginCard.classList.add('shake');
+        
+        setTimeout(() => {
+            loginCard.classList.remove('shake');
+        }, 500);
+    }
+    
+    // Prevenir múltiplos submits
+    form.addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = '⏳ Entrando...';
+    });
+})();
+    </script>
+</body>
+</html>
