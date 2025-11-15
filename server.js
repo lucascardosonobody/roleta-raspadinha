@@ -144,22 +144,7 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// 🔹 Home pública — abre o final.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'final.html'));
-});
 
-
-// Aplicar middleware ANTES de servir arquivos estáticos
-app.use(protegerAdmin);
-
-// Logo após a linha do express.static, adicione:
-app.use(express.static(__dirname));
-
-// Rota principal - redirecionar para final.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'final.html'));
-});
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
@@ -174,6 +159,17 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.log('✅ Conectado ao banco de dados SQLite');
         criarTabelas();
     }
+});
+
+// 🔹 Aplicar middleware de proteção
+app.use(protegerAdmin);
+
+// 🔹 Servir arquivos estáticos
+app.use(express.static(__dirname));
+
+// 🔹 Rota raiz - redirecionar para final.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'final.html'));
 });
 
 // Criar tabelas
