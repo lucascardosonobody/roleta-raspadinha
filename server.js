@@ -156,9 +156,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// 🔹 Aplicar middleware de proteção
-app.use(protegerAdmin);
-
 // 🔹 Servir arquivos estáticos
 app.use(express.static(__dirname));
 
@@ -167,6 +164,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'final.html'));
 });
 
+app.use('/dashboard.html', protegerAdmin);
+app.use('/paineladm.html', protegerAdmin);
+app.use('/historico.html', protegerAdmin);
+app.use('/indicacoes.html', protegerAdmin);
+app.use('/notificacoes.html', protegerAdmin);
+app.use('/raspadinha.html', protegerAdmin);
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
