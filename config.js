@@ -2,7 +2,6 @@
 // CONFIGURAÇÃO CENTRAL DO SISTEMA
 // Arquivo: config.js
 // ============================================
-
 const CONFIG = {
     // 🌐 DETECÇÃO AUTOMÁTICA DE AMBIENTE
     get DOMAIN() {
@@ -10,8 +9,8 @@ const CONFIG = {
         if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
             return 'http://localhost:3000';
         }
-        // Se estiver em produção, usa o domínio real
-        return 'https://geo-iot.com';
+        // 🚀 PRODUÇÃO - Usar o domínio do Render
+        return 'https://roleta-raspadinha.onrender.com';
     },
 
     // 📡 ENDPOINTS DA API
@@ -54,8 +53,8 @@ const CONFIG = {
         INDICACOES: '/indicacoes.html',
         
         // Recursos
-        IMAGES: '/assets/images',
-        VIDEOS: '/assets/videos'
+        IMAGES: '/images',
+        VIDEOS: '/videos'
     },
 
     // ⚙️ CONFIGURAÇÕES GERAIS
@@ -119,3 +118,5 @@ CONFIG.fetch = async function(endpoint, options = {}) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CONFIG;
 }
+
+console.log('✅ Config carregado! Ambiente:', CONFIG.DOMAIN);
