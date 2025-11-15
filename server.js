@@ -156,6 +156,16 @@ app.get('/logout', (req, res) => {
     });
 });
 
+// 🔹 Aplicar middleware de proteção
+app.use(protegerAdmin);
+
+// 🔹 Servir arquivos estáticos
+app.use(express.static(__dirname));
+
+// 🔹 Rota raiz - redirecionar para final.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'final.html'));
+});
 
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
@@ -173,16 +183,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-// 🔹 Aplicar middleware de proteção
-app.use(protegerAdmin);
-
-// 🔹 Servir arquivos estáticos
-app.use(express.static(__dirname));
-
-// 🔹 Rota raiz - redirecionar para final.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'final.html'));
-});
 
 // Criar tabelas
 function criarTabelas() {
