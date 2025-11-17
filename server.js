@@ -15,7 +15,7 @@ const ADMIN_PASS = 'unisense#2025'; // troque pra uma senha forte de verdade dep
 
 // ==== WEBHOOKS DO ZAPIER ====
 const ZAPIER_WEBHOOK_PREMIO = 'https://hooks.zapier.com/hooks/catch/25364211/u8wlf1i/';
-const ZAPIER_WEBHOOK_INDICACAO = 'https://hooks.zapier.com/hooks/catch/SEU_ID_AQUI/indicacao';
+const ZAPIER_WEBHOOK_INDICACAO = 'https://hooks.zapier.com/hooks/catch/25364211/u8njwhs/';
 
 // Função para enviar dados ao Zapier
 async function enviarParaZapier(webhookUrl, dados) {
