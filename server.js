@@ -1254,54 +1254,6 @@ app.post('/api/registrar-sorteio', async (req, res) => {
     }
 });
 
-// 🧪 ROTA DE TESTE DO ZAPIER
-app.get('/api/testar-zapier', async (req, res) => {
-    console.log('🧪 Testando envio para Zapier...');
-    
-    const dadosTeste = {
-        nome: 'João Teste',
-        email: 'joao@teste.com',
-        whatsapp: '11999999999',
-        premio: 'Teste de Prêmio 🎁',
-        premio_descricao: 'Apenas um teste do sistema',
-        premio_icone: '🎁',
-        tipo_sorteio: 'Teste Manual',
-        data_sorteio: new Date().toLocaleString('pt-BR'),
-        sorteio_id: 999,
-        timestamp: Date.now()
-    };
-    
-    try {
-        console.log('📤 Enviando dados de teste:', dadosTeste);
-        
-        const resultado = await enviarParaZapier(ZAPIER_WEBHOOK_PREMIO, dadosTeste);
-        
-        if (resultado) {
-            console.log('✅ Teste bem-sucedido!');
-            res.json({ 
-                success: true, 
-                mensagem: '✅ Zapier recebeu os dados!',
-                dados_enviados: dadosTeste,
-                webhook_url: ZAPIER_WEBHOOK_PREMIO
-            });
-        } else {
-            console.log('❌ Teste falhou - Zapier não respondeu OK');
-            res.json({ 
-                success: false, 
-                erro: 'Zapier não respondeu com status 200',
-                dados_enviados: dadosTeste,
-                webhook_url: ZAPIER_WEBHOOK_PREMIO
-            });
-        }
-    } catch (error) {
-        console.error('❌ Erro no teste:', error);
-        res.status(500).json({ 
-            success: false, 
-            erro: error.message,
-            dados_enviados: dadosTeste 
-        });
-    }
-});
 
 
 
