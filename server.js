@@ -557,9 +557,9 @@ app.post('/api/indicacoes', async (req, res) => {
                 indicados_detalhes: indicadosDetalhes,
                 
                 // Links para compartilhar
-                link_roleta: `http://SEU_DOMINIO:3000/final.html?secao=roleta`,
-                link_raspadinha: `http://SEU_DOMINIO:3000/final.html?secao=raspadinha`,
-                link_geral: `http://SEU_DOMINIO:3000/final.html`,
+                link_roleta: `https://roleta-raspadinha.onrender.com/testeroleta.html`,
+                link_raspadinha: `https://roleta-raspadinha.onrender.com/login2.html`,
+                link_geral: `https://roleta-raspadinha.onrender.com/final.html`,
                 
                 // Data
                 data_indicacao: new Date().toLocaleString('pt-BR')
