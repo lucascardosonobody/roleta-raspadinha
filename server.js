@@ -1213,7 +1213,7 @@ app.post('/api/registrar-sorteio', async (req, res) => {
             }),
             
             // 🔗 Links úteis
-            link_sistema: `http://localhost:${PORT}/final.html`,
+            link_sistema: `https://roleta-raspadinha.onrender.com/final.html`,
             
             // 🆔 ID para rastreamento
             sorteio_id: sorteioId,
