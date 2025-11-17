@@ -463,7 +463,7 @@ app.post('/api/indicacoes', async (req, res) => {
     
     let indicacoesSalvas = 0;
     let erros = [];
-    let indicadosDetalhes = []; // 🆕 Para enviar ao Zapier
+    let indicadosDetalhes = [];
     
     try {
         for (let i = 0; i < indicacoes.length; i++) {
@@ -509,7 +509,6 @@ app.post('/api/indicacoes', async (req, res) => {
                             console.log(`  ✅ ${nome} cadastrado com ID: ${this.lastID}, indicado por: ${indicante_id}`);
                             indicacoesSalvas++;
                             
-                            // 🆕 Guardar detalhes para o Zapier
                             indicadosDetalhes.push({
                                 nome: nome,
                                 whatsapp: whatsapp,
@@ -541,34 +540,79 @@ app.post('/api/indicacoes', async (req, res) => {
                 );
             });
             
-            // 🆕 ENVIAR PARA O ZAPIER
+            // 🆕 ENVIAR PARA O ZAPIER - VERSÃO CORRIGIDA
+            console.log('📤 Preparando dados para Zapier...');
+            
             const dadosZapier = {
                 // Dados de quem indicou
-                indicante_nome: indicante_nome,
-                indicante_email: indicante_email,
-                indicante_whatsapp: indicante_whatsapp,
+                indicante_nome: indicante_nome || 'Nome não informado',
+                indicante_email: indicante_email || 'Email não informado',
+                indicante_whatsapp: indicante_whatsapp || 'WhatsApp não informado',
                 
                 // Quantas pessoas foram indicadas
                 total_indicacoes: indicacoesSalvas,
                 chances_ganhas: indicacoesSalvas,
                 
-                // Lista de indicados
-                indicados: indicadosDetalhes.map(ind => ind.nome).join(', '),
-                indicados_detalhes: indicadosDetalhes,
+                // Lista de nomes dos indicados (string separada por vírgula)
+                indicados_nomes: indicadosDetalhes.map(ind => ind.nome).join(', '),
                 
-                // Links para compartilhar
-                link_roleta: `https://roleta-raspadinha.onrender.com/testeroleta.html`,
-                link_raspadinha: `https://roleta-raspadinha.onrender.com/login2.html`,
-                link_geral: `https://roleta-raspadinha.onrender.com/final.html`,
+                // Primeiro indicado (para facilitar no Zapier)
+                primeiro_indicado_nome: indicadosDetalhes[0]?.nome || '',
+                primeiro_indicado_email: indicadosDetalhes[0]?.email || '',
+                primeiro_indicado_whatsapp: indicadosDetalhes[0]?.whatsapp || '',
                 
-                // Data
-                data_indicacao: new Date().toLocaleString('pt-BR')
+                // Segundo indicado (se houver)
+                segundo_indicado_nome: indicadosDetalhes[1]?.nome || '',
+                segundo_indicado_email: indicadosDetalhes[1]?.email || '',
+                segundo_indicado_whatsapp: indicadosDetalhes[1]?.whatsapp || '',
+                
+                // Terceiro indicado (se houver)
+                terceiro_indicado_nome: indicadosDetalhes[2]?.nome || '',
+                terceiro_indicado_email: indicadosDetalhes[2]?.email || '',
+                terceiro_indicado_whatsapp: indicadosDetalhes[2]?.whatsapp || '',
+                
+                // Links
+                link_geral: 'https://roleta-raspadinha.onrender.com',
+                
+                // Data e hora
+                data_indicacao: new Date().toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                
+                // Timestamp para rastreamento
+                timestamp: Date.now()
             };
             
-            // Enviar para Zapier (não espera resposta)
-            enviarParaZapier(ZAPIER_WEBHOOK_INDICACAO, dadosZapier).catch(err => {
-                console.error('⚠️ Erro ao enviar para Zapier (não crítico):', err);
-            });
+            console.log('📤 Enviando para Zapier:', dadosZapier);
+            
+            // Enviar para Zapier com tratamento de erro melhorado
+            try {
+                const zapierResponse = await fetch(ZAPIER_WEBHOOK_INDICACAO, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dadosZapier)
+                });
+                
+                const responseText = await zapierResponse.text();
+                
+                if (zapierResponse.ok) {
+                    console.log('✅ Zapier notificado com sucesso!');
+                    console.log('📥 Resposta do Zapier:', responseText);
+                } else {
+                    console.error('❌ Erro ao notificar Zapier. Status:', zapierResponse.status);
+                    console.error('📥 Resposta:', responseText);
+                }
+            } catch (zapierError) {
+                console.error('❌ Erro ao enviar para Zapier:', zapierError.message);
+                console.error('Stack:', zapierError.stack);
+            }
         }
         
         if (indicacoesSalvas > 0) {
