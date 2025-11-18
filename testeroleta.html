@@ -124,17 +124,28 @@
             line-height: 1.3;
         }
 
+        /* ✅ GRADE 2x2 PARA PRÊMIOS */
+        #listaPremios {
+            display: grid;
+            grid-template-columns: 1fr 1fr;  /* 2 colunas iguais */
+            gap: 10px;  /* Espaçamento entre os itens */
+        }
+
         .premio-item {
             background: linear-gradient(135deg, #ffd700, #ffed4e);
             padding: 12px;
             border-radius: 10px;
-            margin-bottom: 10px;
             font-weight: 700;
             color: #333;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             text-align: center;
             font-size: 0.9em;
             line-height: 1.3;
+            margin: 0;  /* Remove margin pois o gap já controla */
+        }
+
+        .sem-premios {
+            grid-column: 1 / -1;  /* Ocupa as 2 colunas quando não há prêmios */
         }
 
         .premio-item:last-child {
@@ -240,7 +251,7 @@
 
 
 
-        .roleta-container {
+        .roleta-container {a
             position: relative;
             width: 100%;
             aspect-ratio: 1;
@@ -615,9 +626,8 @@
             }
 
             .card-premios {
-                min-width: 120px;
-                max-width: 140px;
-                padding: 12px;
+                min-width: 350px;
+                padding: 6px;
             }
 
             .card-premios h3 {
@@ -756,7 +766,7 @@
                 
                 <!-- Card: Próximos Prêmios (AGORA À DIREITA) -->
                 <div class="card-premios">
-                    <h3>Próximos<br>Prêmios:</h3>
+                    <h3>Próximos Prêmios:</h3>
                     <div id="listaPremios">
                         <div class="sem-premios">Carregando...</div>
                     </div>
