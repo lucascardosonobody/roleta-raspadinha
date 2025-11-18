@@ -89,8 +89,8 @@
         /* ✅ NOVO: Container para Roleta + Card lado a lado */
         .roleta-e-card-wrapper {
             display: grid;
-            grid-template-columns: 1fr 1fr;  /* 50% cada */
-            gap: 30px;
+            grid-template-columns: 1fr auto;  /* 50% cada */
+            gap: 10px;
             width: 100%;
             max-width: 1000px;
             align-items: start;
@@ -175,6 +175,7 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             display: block !important;
             opacity: 1 !important;
+            padding: 5px;
         }
 
         .premio-rotativo {
