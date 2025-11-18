@@ -77,18 +77,30 @@
         }
 
         .content-wrapper {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 30px;
-            align-items: start;
+            display: flex;
+            flex-direction: column;  /* Mantém empilhado por padrão */
+            gap: 20px;
+            align-items: center;
             padding: 30px 20px;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+
+        /* ✅ NOVO: Container para Roleta + Card lado a lado */
+        .roleta-e-card-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;  /* 50% cada */
+            gap: 30px;
+            width: 100%;
+            max-width: 1000px;
+            align-items: start;
         }
 
         .container {
             width: 100%;
+            max-width: 600px;  /* ✅ LIMITA A LARGURA */
             text-align: center;
+            margin: 0 auto;    /* ✅ CENTRALIZA */
         }
 
         .card-premios {
@@ -96,8 +108,10 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            min-width: 220px;
-            max-width: 280px;
+            width: 100%;
+            max-width: 100%;  /* ✅ Ocupa todo espaço disponível */
+            margin: 0;
+            height: fit-content;  /* ✅ Se ajusta ao conteúdo */
         }
 
         .card-premios h3 {
@@ -420,14 +434,20 @@
         /* Tablets */
         @media (max-width: 1024px) {
             .content-wrapper {
+                flex-direction: column;
+                max-width: 600px;
                 padding: 20px 15px;
                 gap: 20px;
             }
 
+            .roleta-e-card-wrapper {
+                grid-template-columns: 1fr;  /* 1 coluna */
+                gap: 20px;
+            }
+
             .card-premios {
-                min-width: 200px;
-                max-width: 240px;
-                padding: 18px;
+                max-width: 500px;
+                margin: 0 auto;
             }
 
             .card-premios h3 {
@@ -490,6 +510,18 @@
             .topo-imagem {
                 max-height: 140px;
                 object-fit: cover;
+            }
+
+            .roleta-e-card-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-premios {
+                order: 2;  /* Card aparece depois da roleta */
+            }
+            
+            .container {
+                order: 1;  /* Roleta aparece primeiro */
             }
 
             .content-wrapper {
@@ -692,29 +724,47 @@
         <!-- Imagem do Topo -->
         <img src="roleta topo.png" alt="Roleta Topo" class="topo-imagem">
         <div class="content-wrapper">
-            <!-- Card Lateral: Próximos Prêmios (AGORA À ESQUERDA) -->
-            <div class="card-premios">
-                <h3>Próximos<br>Prêmios:</h3>
-                <div id="listaPremios">
-                    <div class="sem-premios">Carregando...</div>
-                </div>
-            </div>
-            <!-- Coluna Principal: Roleta -->
-            <div class="container">
-                <h1 id="tituloRoleta">🎡 Roleta de Prêmios 🎡</h1>
-                <div class="roleta-wrapper">
-                    <div class="seta-indicador"></div>
-                    <div class="roleta-container">
-                      <canvas id="roletaCanvas"></canvas>
-                      <div class="centro-roleta" id="centroRoleta">
-                          <img src="logounisense.jpeg" alt="Logo Unisense" class="logo-roleta" id="logoRoleta">
-                          <div class="mensagem-aguardando" id="mensagemAguardando" style="display:none;">
-                              A roleta vai começar automaticamente quando alcançar 50 participantes
-                          </div>
-                      </div>
-                  </div>
-                </div>
+            <!-- ✅ NOVA DIV: Envolve Roleta + Card -->
+            <div class="roleta-e-card-wrapper">
+                
+                <!-- Coluna Principal: Roleta (AGORA À ESQUERDA) -->
+                <div class="container">
+                    <h1 id="tituloRoleta" style="font-size: 0.2em;">🎡 Roleta de Prêmios 🎡</h1>
+                    <div class="roleta-wrapper">
+                        <div class="seta-indicador"></div>
+                        <div class="roleta-container">
+                            <canvas id="roletaCanvas"></canvas>
+                            <div class="centro-roleta" id="centroRoleta">
+                                <img src="logounisense.jpeg" alt="Logo Unisense" class="logo-roleta" id="logoRoleta">
+                                <div class="mensagem-aguardando" id="mensagemAguardando" style="display:none;">
+                                    A roleta vai começar automaticamente quando alcançar 50 participantes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div class="resultado" id="resultado">
+                        <h2>🎉 PARABÉNS! 🎉</h2>
+                        <div class="ganhador" id="nomeGanhador"></div>
+                        <div class="premio" id="premioGanhador"></div>
+                    </div>
+
+                    <div class="loading" id="loading" style="display:none;">
+                        Carregando dados...
+                    </div>
+                </div>
+                
+                <!-- Card: Próximos Prêmios (AGORA À DIREITA) -->
+                <div class="card-premios">
+                    <h3>Próximos<br>Prêmios:</h3>
+                    <div id="listaPremios">
+                        <div class="sem-premios">Carregando...</div>
+                    </div>
+                </div>
+                
+            </div> <!-- Fecha roleta-e-card-wrapper -->
+        </div> <!-- Fecha content-wrapper -->
+                  
                
 
                 <div class="resultado" id="resultado">
@@ -727,6 +777,8 @@
                     Carregando dados...
                 </div>
             </div>
+
+            
 
     <script>
         // ============================================
