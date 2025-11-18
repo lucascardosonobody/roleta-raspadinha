@@ -93,7 +93,7 @@
             gap: 10px;
             width: 100%;
             max-width: 1000px;
-            align-items: start;card-premio
+            align-items: start;
         }
 
         .container {
@@ -112,6 +112,7 @@
             max-width: 100%;  /* ✅ Ocupa todo espaço disponível */
             margin: 0;
             height: fit-content;  /* ✅ Se ajusta ao conteúdo */
+            overflow: hidden;  /* ✅ Garante que nada saia do card */
         }
 
         .card-premios h3 {
@@ -124,16 +125,43 @@
             line-height: 1.3;
         }
 
-        /* ✅ GRADE 2x2 PARA PRÊMIOS */
+         /* ✅ LISTA HORIZONTAL COM SCROLL */
         #listaPremios {
-            display: grid;
-            grid-template-columns: 1fr 1fr;  /* 2 colunas iguais */
-            gap: 10px;  /* Espaçamento entre os itens */
+            display: flex;
+            flex-direction: row;  /* Alinhamento horizontal */
+            gap: 10px;
+            overflow-x: auto;  /* Scroll horizontal */
+            overflow-y: hidden;  /* Sem scroll vertical */
+            padding: 10px 5px;
+            scroll-behavior: smooth;  /* Scroll suave */
+            
+            /* Estilização da barra de scroll */
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #f0f0f0;
+        }
+
+        /* Estilização da barra de scroll para Webkit (Chrome, Safari, Edge) */
+        #listaPremios::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        #listaPremios::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        #listaPremios::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        #listaPremios::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
         }
 
         .premio-item {
             background: linear-gradient(135deg, #ffd700, #ffed4e);
-            padding: 12px;
+            padding: 12px 20px;
             border-radius: 10px;
             font-weight: 700;
             color: #333;
@@ -141,11 +169,16 @@
             text-align: center;
             font-size: 0.9em;
             line-height: 1.3;
-            margin: 0;  /* Remove margin pois o gap já controla */
+            margin: 0;
+            white-space: nowrap;  /* ✅ Texto não quebra linha */
+            flex-shrink: 0;  /* ✅ Itens não encolhem */
+            min-width: fit-content;  /* ✅ Largura mínima baseada no conteúdo */
         }
 
         .sem-premios {
-            grid-column: 1 / -1;  /* Ocupa as 2 colunas quando não há prêmios */
+            width: 100%;  /* Ocupa toda a largura quando não há prêmios */
+            text-align: center;
+            white-space: normal;  /* Permite quebra de linha */
         }
 
         .premio-item:last-child {
@@ -252,7 +285,7 @@
 
 
 
-        .roleta-container {a
+        .roleta-container {
             position: relative;
             width: 100%;
             aspect-ratio: 1;
@@ -614,7 +647,7 @@
                 padding: 8px 10px;
             }
         }
-
+ 
         /* Mobile Pequeno */
         @media (max-width: 480px) {
             .topo-imagem {
@@ -623,7 +656,7 @@
 
             .content-wrapper {
                 gap: 8px;
-                padding: 0px 0px;
+                padding: 0px 5px;
             }
 
             .card-premios {
@@ -756,12 +789,12 @@
                     </div>
 
                     <!-- Card: Próximos Prêmios (AGORA À DIREITA) -->
-                <div class="card-premios">
-                    <h3>Próximos Prêmios:</h3>
-                    <div id="listaPremios">
-                        <div class="sem-premios">Carregando...</div>
+                    <div class="card-premios">
+                        <h3>Próximos Prêmios:</h3>
+                        <div id="listaPremios">
+                            <div class="sem-premios">Carregando...</div>
+                        </div>
                     </div>
-                </div>
 
                     <div class="resultado" id="resultado">
                         <h2>🎉 PARABÉNS! 🎉</h2>
@@ -773,7 +806,7 @@
                         Carregando dados...
                     </div>
                 </div>
-                
+
             </div> <!-- Fecha roleta-e-card-wrapper -->
         </div> <!-- Fecha content-wrapper -->
                   
