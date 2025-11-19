@@ -1403,35 +1403,26 @@
                     console.log('🎁 Prêmios disponíveis:', premios.length);
 
                     girando = true;
-                    
-                    // ❌ REMOVER ESTA LINHA QUE CAUSAVA O ERRO:
-                    // document.getElementById('btnGirar').disabled = true;
-                    
                     document.getElementById('resultado').classList.remove('ativo');
 
-                    // Sortear vencedor
-                    const indiceVencedor = Math.floor(Math.random() * participantes.length);
+                    // 🆕 SORTEIO SINCRONIZADO: Usar timestamp como seed
+                    const seed = Date.now();
+                    const indiceVencedor = seed % participantes.length;
                     const vencedor = participantes[indiceVencedor];
 
+                    console.log('🎯 Seed usado:', seed);
+                    console.log('🎯 Índice do vencedor:', indiceVencedor);
                     console.log('🎯 Vencedor sorteado:', vencedor.nome);
 
-                    // PEGAR O PRIMEIRO PRÊMIO DA FILA (não aleatório!)
+                    // PEGAR O PRIMEIRO PRÊMIO DA FILA
                     const premioSorteado = filaPremios[0];
-
                     console.log('🎁 Prêmio sorteado:', premioSorteado.nome);
 
-                    // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+                    // Calcular ângulo final
                     const sliceAngle = (Math.PI * 2) / participantes.length;
-
-                    // Ângulo do vencedor em relação à posição inicial
                     const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-
-                    // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-                    // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
                     const anguloSeta = -Math.PI / 2;
-
-                    // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-                    const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+                    const rotacoesCompletas = Math.PI * 2 * 5;
                     const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
                     // Animação
@@ -1441,8 +1432,6 @@
                     function animar() {
                         const agora = Date.now();
                         const progresso = Math.min((agora - inicio) / duracao, 1);
-                        
-                        // Easing (desaceleração)
                         const easeOut = 1 - Math.pow(1 - progresso, 3);
                         
                         anguloAtual = anguloFinal * easeOut;
@@ -1547,11 +1536,12 @@
                         console.error('Erro no postMessage:', e);
                     }
 
+                    // 🆕 OCULTAR RESULTADO AUTOMATICAMENTE APÓS 2 SEGUNDOS
                     setTimeout(() => {
+                        document.getElementById('resultado').classList.remove('ativo');
                         moverPremioParaFinalDaFila();
                         girando = false;
                     }, 2000);
-                }
 
         // ========================================
         // ADICIONAR NO FINAL DO <script> da roleta.html
@@ -1821,14 +1811,14 @@
 
         console.log('✅ Listener de sorteio automático configurado e pronto');
 
-                // Nova função: girar roleta com resultado pré-determinado
+        // Nova função: girar roleta com resultado pré-determinado
         async function girarRoletaComResultado(vencedor, premio) {
             if (girando) {
                 console.log('⚠️ Roleta já está girando');
                 return;
             }
 
-            console.log('🎰 Iniciando animação da roleta');
+            console.log('🎰 Iniciando animação da roleta COM RESULTADO PRÉ-DETERMINADO');
             console.log('  Vencedor:', vencedor);
             console.log('  Prêmio:', premio);
 
@@ -1839,45 +1829,33 @@
             girando = true;
             document.getElementById('resultado').classList.remove('ativo');
 
-            // Encontrar o índice do vencedor na lista de participantes
+            // Encontrar o índice do vencedor
             const indiceVencedor = participantes.findIndex(p => 
                 p.id === vencedor.id || p.email === vencedor.email || p.nome === vencedor.nome
             );
 
             if (indiceVencedor === -1) {
                 console.error('❌ Vencedor não encontrado na lista de participantes');
-                console.log('Vencedor procurado:', vencedor);
-                console.log('Participantes disponíveis:', participantes);
                 girando = false;
                 return;
             }
 
             console.log(`✅ Vencedor encontrado no índice ${indiceVencedor}`);
 
-            // Calcular ângulo final para parar no vencedor
-            // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+            // Calcular ângulo final
             const sliceAngle = (Math.PI * 2) / participantes.length;
-                    
-            // Ângulo do vencedor em relação à posição inicial
             const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-                    
-            // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-            // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
             const anguloSeta = -Math.PI / 2;
-                    
-            // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-            const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+            const rotacoesCompletas = Math.PI * 2 * 5;
             const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
-            // Animação de rotação
-            const duracao = 5000; // 5 segundos
+            // Animação
+            const duracao = 5000;
             const inicio = Date.now();
 
             function animar() {
                 const agora = Date.now();
                 const progresso = Math.min((agora - inicio) / duracao, 1);
-
-                // Easing (desaceleração suave)
                 const easeOut = 1 - Math.pow(1 - progresso, 3);
 
                 anguloAtual = anguloFinal * easeOut;
@@ -1886,7 +1864,6 @@
                 if (progresso < 1) {
                     requestAnimationFrame(animar);
                 } else {
-                    // Animação concluída, mostrar resultado
                     console.log('🎉 Animação concluída!');
                     mostrarResultado(vencedor, premio);
                 }
