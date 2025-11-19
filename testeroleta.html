@@ -177,6 +177,7 @@
 
         .sem-premios {
             width: 100%;  /* Ocupa toda a largura quando não há prêmios */
+            height: 34px;
             text-align: center;
             align-items: center;
             white-space: normal;  /* Permite quebra de linha */
@@ -187,10 +188,13 @@
         }
 
         .card-premios .sem-premios {
-            color: #999;
+            position: absolute;
+            bottom: 8px;               /* distância do fundo do card */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
             text-align: center;
-            padding: 20px;
-            font-style: italic;
+            padding: 0;                /* se quiser, tira o padding */
         }
 
         .container {
@@ -683,7 +687,7 @@
 
             h1 {
                 font-size: 0.5em;
-                margin-bottom: 2px;  /* ✅ REDUZIDO de 8px para 5px */
+                margin-bottom: 5px;  /* ✅ REDUZIDO de 8px para 5px */
             }
 
             .info-participantes {
