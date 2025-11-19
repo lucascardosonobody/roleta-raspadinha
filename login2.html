@@ -192,7 +192,34 @@
         .premio-revelado.nao-ganhou {
             color: #999;
             font-size: 1em;
-}
+        }
+
+        /* ✅ ADICIONAR NO <style> */
+        .raspadinha-card.oculto {
+            display: none;
+        }
+
+        .mensagem-erro {
+            color: #DC143C;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            border: 3px solid #DC143C;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .mensagem-erro::before {
+            content: "⏳";
+            display: block;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
 
     </style>
 </head>
@@ -352,16 +379,23 @@
                 console.log('🎁 TOTAL DE PRÊMIOS CARREGADOS:', todosPremios.length);
                 console.log('📋 Lista completa de prêmios:', todosPremios);
                 
+                // ✅ DENTRO DA FUNÇÃO carregarPremiosAgendados, APÓS VERIFICAR SE HÁ PRÊMIOS:
+
                 if (todosPremios.length === 0) {
                     premios = ['NÃO FOI DESSA VEZ'];
-                    mostrarMensagemErro('⏰ Nenhum prêmio disponível neste horário');
+                    mostrarMensagemErro('⏳ Nenhuma raspadinha ativa no momento');
                 } else {
                     premios = todosPremios;
                     
-                    // Remover mensagem de erro se houver
+                    // ✅ REMOVER MENSAGEM DE ERRO E MOSTRAR RASPADINHA
                     const msgErro = document.querySelector('.mensagem-erro');
                     if (msgErro) {
                         msgErro.remove();
+                    }
+                    
+                    const raspadinhaCard = document.querySelector('.raspadinha-card');
+                    if (raspadinhaCard) {
+                        raspadinhaCard.classList.remove('oculto');
                     }
                 }
                 
@@ -376,13 +410,22 @@
         }
 
         function mostrarMensagemErro(mensagem) {
+            // ✅ OCULTAR A RASPADINHA
+            const raspadinhaCard = document.querySelector('.raspadinha-card');
+            if (raspadinhaCard) {
+                raspadinhaCard.classList.add('oculto');
+            }
+            
+            // ✅ MOSTRAR MENSAGEM DE ERRO
             const container = document.querySelector('.container');
             let msgErro = document.querySelector('.mensagem-erro');
             
             if (!msgErro) {
                 msgErro = document.createElement('div');
                 msgErro.className = 'mensagem-erro';
-                container.insertBefore(msgErro, container.firstChild);
+                // Inserir antes dos botões
+                const botoes = document.querySelector('.botoes-container');
+                container.insertBefore(msgErro, botoes);
             }
             
             msgErro.textContent = mensagem;
