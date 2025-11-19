@@ -177,7 +177,7 @@
 
         .sem-premios {
             width: 100%;  /* Ocupa toda a largura quando não há prêmios */
-            height: 34px;
+            height: 30px;
             text-align: center;
             align-items: center;
             white-space: normal;  /* Permite quebra de linha */
@@ -1459,101 +1459,257 @@
                     animar();
                 }
 
-            async function mostrarResultado(vencedor, premio) {
-                console.log('🎯 mostrarResultado recebeu:');
-                console.log('  Vencedor:', vencedor);
-                console.log('  Premio:', premio);
-                
-                document.getElementById('nomeGanhador').textContent = vencedor.nome;
-                document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
-                document.getElementById('resultado').classList.add('ativo');
+                async function mostrarResultado(vencedor, premio) {
+                    console.log('🎯 mostrarResultado recebeu:');
+                    console.log('  Vencedor:', vencedor);
+                    console.log('  Premio:', premio);
+                    
+                    document.getElementById('nomeGanhador').textContent = vencedor.nome;
+                    document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
+                    document.getElementById('resultado').classList.add('ativo');
 
-                // 🎯 REGISTRAR GANHADOR DA ROLETA
-                try {
-                    const dadosRegistro = {
-                        participante: {
-                            nome: String(vencedor.nome || ''),
-                            email: String(vencedor.email || ''),
-                            whatsapp: String(vencedor.whatsapp || '')
-                        },
-                        premio: {
-                            id: Number(premio.id) || 0,
-                            nome: String(premio.nome || 'Prêmio')
-                        },
-                        tipo_sorteio: 'roleta'
-                    };
-                    
-                    console.log('📤 Enviando registro:', JSON.stringify(dadosRegistro, null, 2));
-                    
-                    const response = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json' 
-                        },
-                        body: JSON.stringify(dadosRegistro)
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('✅ Ganhador da roleta registrado com sucesso!', data);
-                    } else {
-                        const errorText = await response.text();
-                        console.error('❌ Erro HTTP', response.status, ':', errorText);
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Erro ao registrar ganhador:', error);
-                }
-
-                // 🆕 ENVIAR RESULTADO PARA O ADMIN (SE VEIO DO SORTEIO AUTOMÁTICO)
-                if (isAutoSorteio && window.opener) {
-                    console.log('📤 Enviando resultado para o admin...');
-                    
-                    window.opener.postMessage({
-                        type: 'SORTEIO_CONCLUIDO',
-                        vencedor: {
-                            id: vencedor.id,
-                            nome: vencedor.nome,
-                            email: vencedor.email,
-                            whatsapp: vencedor.whatsapp
-                        },
-                        premio_id: premioId,
-                        premio_nome: premioNome
-                    }, window.location.origin);
-                    
-                    console.log('✅ Resultado enviado! Fechando em 5 segundos...');
-                    
-                    // Fechar a janela após 5 segundos
-                    setTimeout(() => {
-                        window.close();
-                    }, 5000);
-                    
-                    return; // Não continua o resto do código
-                }
-
-                // Enviar resultado para o parent (modo iframe - manter compatibilidade)
-                try {
-                    window.parent.postMessage({
-                        action: 'resultadoRoleta',
-                        vencedor: {
-                            nome: vencedor.nome,
-                            email: vencedor.email
-                        },
-                        premio: {
-                            nome: premio.nome
+                    // 🎯 REGISTRAR GANHADOR DA ROLETA
+                    try {
+                        const dadosRegistro = {
+                            participante: {
+                                nome: String(vencedor.nome || ''),
+                                email: String(vencedor.email || ''),
+                                whatsapp: String(vencedor.whatsapp || '')
+                            },
+                            premio: {
+                                id: Number(premio.id) || 0,
+                                nome: String(premio.nome || 'Prêmio')
+                            },
+                            tipo_sorteio: 'roleta'
+                        };
+                        
+                        console.log('📤 Enviando registro:', JSON.stringify(dadosRegistro, null, 2));
+                        
+                        const response = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify(dadosRegistro)
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ Ganhador da roleta registrado com sucesso!', data);
+                        } else {
+                            const errorText = await response.text();
+                            console.error('❌ Erro HTTP', response.status, ':', errorText);
                         }
-                    }, '*');
-                } catch (e) {
-                    console.error('Erro no postMessage:', e);
+                        
+                    } catch (error) {
+                        console.error('❌ Erro ao registrar ganhador:', error);
+                    }
+
+                    // 🆕 ENVIAR RESULTADO PARA O ADMIN (SE VEIO DO SORTEIO AUTOMÁTICO)
+                    if (isAutoSorteio && window.opener) {
+                        console.log('📤 Enviando resultado para o admin...');
+                        
+                        window.opener.postMessage({
+                            type: 'SORTEIO_CONCLUIDO',
+                            vencedor: {
+                                id: vencedor.id,
+                                nome: vencedor.nome,
+                                email: vencedor.email,
+                                whatsapp: vencedor.whatsapp
+                            },
+                            premio_id: premioId,
+                            premio_nome: premioNome
+                        }, window.location.origin);
+                        
+                        console.log('✅ Resultado enviado! Fechando em 5 segundos...');
+                        
+                        // Fechar a janela após 5 segundos
+                        setTimeout(() => {
+                            window.close();
+                        }, 5000);
+                        
+                        return; // Não continua o resto do código
+                    }
+
+                    // Enviar resultado para o parent (modo iframe - manter compatibilidade)
+                    try {
+                        window.parent.postMessage({
+                            action: 'resultadoRoleta',
+                            vencedor: {
+                                nome: vencedor.nome,
+                                email: vencedor.email
+                            },
+                            premio: {
+                                nome: premio.nome
+                            }
+                        }, '*');
+                    } catch (e) {
+                        console.error('Erro no postMessage:', e);
+                    }
+
+                    setTimeout(() => {
+                        moverPremioParaFinalDaFila();
+                        girando = false;
+                    }, 2000);
                 }
 
-                // ✅ ALTERADO: Modal desaparece após 1,5 segundos (1500ms)
-                setTimeout(() => {
-                    document.getElementById('resultado').classList.remove('ativo'); // ✅ OCULTA O MODAL
-                    moverPremioParaFinalDaFila();
-                    girando = false;
-                }, 1500); // ✅ MUDADO DE 2000 PARA 1500
+        // ========================================
+        // ADICIONAR NO FINAL DO <script> da roleta.html
+        // ANTES de "carregarDados();"
+        // ========================================
+
+        // 
+        // Verificar configuração do sorteio automático
+        async function verificarSorteioAutomatico() {
+            console.log('🔄 Verificando sorteio automático...');
+            
+            try {
+                const sorteios = await CONFIG.fetch(CONFIG.API.SORTEIOS_AGENDADOS);
+                console.log('📊 Sorteios agendados:', sorteios);
+                
+                if (!Array.isArray(sorteios) || sorteios.length === 0) {
+                    console.log('ℹ️ Nenhum sorteio agendado');
+                    return;
+                }
+                
+                const sorteioAtivo = sorteios.find(s => s.ativo === 1);
+                
+                if (!sorteioAtivo) {
+                    console.log('ℹ️ Nenhum sorteio ativo encontrado');
+                    return;
+                }
+                
+                console.log('✅ Sorteio ativo encontrado:', sorteioAtivo);
+                
+                // Verificar se atingiu o número de participantes
+                const participantes = await CONFIG.fetch(CONFIG.API.PARTICIPANTES);
+                
+                const totalParticipantes = participantes.filter(p => p.sorteado === 0).length;
+                
+                console.log(`👥 Participantes: ${totalParticipantes}/${sorteioAtivo.participantes_necessarios}`);
+                
+                if (totalParticipantes >= sorteioAtivo.participantes_necessarios) {
+                    console.log('🎉 Número de participantes atingido! Iniciando sorteio...');
+                    await realizarSorteio(sorteioAtivo.id);
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao verificar sorteio automático:', error);
             }
+        }
+
+        // Função de girar automático (igual ao manual mas chama a API)
+        async function girarRoletaAutomatico() {
+            // Garantir que a logo está visível durante o giro
+            document.getElementById('logoRoleta').style.display = 'block';
+            document.getElementById('mensagemAguardando').style.display = 'none';
+            
+            if (girando) return;
+            if (participantes.length === 0) {
+                console.log('❌ Nenhum participante disponível');
+                return;
+            }
+            if (filaPremios.length === 0) {
+                console.log('❌ Nenhum prêmio disponível');
+                return;
+            }
+
+            girando = true;
+            document.getElementById('resultado').classList.remove('ativo');
+            
+            try {
+                // CHAMAR API DE SORTEIO AUTOMÁTICO
+                console.log('📡 Chamando API de sorteio automático...');
+                const resultado = await CONFIG.fetch(CONFIG.API.EXECUTAR_SORTEIO_AUTOMATICO, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                console.log('✅ Resultado do sorteio:', resultado);
+
+                const vencedor = resultado.resultado.participante;
+                const premioSorteado = resultado.resultado.premio;
+                
+                // Encontrar índice do vencedor na lista de participantes
+                const indiceVencedor = participantes.findIndex(p => 
+                    p.email === vencedor.email || p.nome === vencedor.nome
+                );
+                
+                if (indiceVencedor === -1) {
+                    console.error('❌ Vencedor não encontrado na lista');
+                    girando = false;
+                    return;
+                }
+
+                // Calcular ângulo final
+                // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
+                const sliceAngle = (Math.PI * 2) / participantes.length;
+
+                // Ângulo do vencedor em relação à posição inicial
+                const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+
+                // A seta está no topo (ângulo = -PI/2 ou 270 graus)
+                // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
+                const anguloSeta = -Math.PI / 2;
+
+                // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
+                const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+                const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+
+                // Animação
+                const duracao = 5000;
+                const inicio = Date.now();
+
+                function animar() {
+                    const agora = Date.now();
+                    const progresso = Math.min((agora - inicio) / duracao, 1);
+                    
+                    // Easing (desaceleração)
+                    const easeOut = 1 - Math.pow(1 - progresso, 3);
+                    
+                    anguloAtual = anguloFinal * easeOut;
+                    desenharRoleta();
+
+                    if (progresso < 1) {
+                        requestAnimationFrame(animar);
+                    } else {
+                        mostrarResultadoAutomatico(vencedor, premioSorteado);
+                    }
+                }
+
+                animar();
+                
+            } catch (error) {
+                console.error('❌ Erro ao executar sorteio automático:', error);
+                girando = false;
+            }
+        }
+
+        // Mostrar resultado do sorteio automático
+        async function mostrarResultadoAutomatico(vencedor, premio) {
+            console.log('🎉 SORTEIO AUTOMÁTICO CONCLUÍDO!');
+            console.log('  Vencedor:', vencedor.nome);
+            console.log('  Premio:', premio.nome);
+            
+            document.getElementById('nomeGanhador').textContent = vencedor.nome;
+            document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
+            document.getElementById('resultado').classList.add('ativo');
+
+            // Mover prêmio para o final da fila
+            moverPremioParaFinalDaFila();
+            
+            // Recarregar participantes (o vencedor já foi marcado como sorteado pela API)
+            await carregarDados();
+            
+            // Aguardar 5 segundos e resetar
+            setTimeout(() => {
+                document.getElementById('resultado').classList.remove('ativo');
+                girando = false;
+                
+                // Verificar novamente após 5 segundos
+                setTimeout(verificarSorteioAutomatico, 5000);
+            }, 5000);
+        }
 
         // Iniciar verificação periódica (a cada 10 segundos)
         setInterval(verificarSorteioAutomatico, 10000);
