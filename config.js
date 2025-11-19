@@ -167,6 +167,7 @@ const CONFIG = {
     SECURITY: {
         ALLOWED_ORIGINS: [
             'https://roleta-raspadinha.onrender.com',
+            'https://roleta-raspadinha-m7li2z5db-lucascardosonobodys-projects.vercel.app/dashboard.html',
             'https://geo-iot.com',
             'http://localhost:3000',
             'http://localhost:5500',
