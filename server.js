@@ -15,7 +15,7 @@ const ADMIN_PASS = 'unisense#2025'; // troque pra uma senha forte de verdade dep
 
 // ==== WEBHOOKS DO ZAPIER ====
 const ZAPIER_WEBHOOK_PREMIO = 'https://hooks.zapier.com/hooks/catch/25364211/u8wlf1i/';
-const ZAPIER_WEBHOOK_INDICACAO = 'https://hooks.zapier.com/hooks/catch/25364211/u8njwhs/';
+const ZAPIER_WEBHOOK_INDICACAO = 'https://hooks.zapier.com/hooks/catch/SEU_ID_AQUI/indicacao';
 
 // Função para enviar dados ao Zapier
 async function enviarParaZapier(webhookUrl, dados) {
@@ -156,14 +156,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-app.use('/dashboard.html', protegerAdmin);
-app.use('/paineladm.html', protegerAdmin);
-app.use('/historico.html', protegerAdmin);
-app.use('/indicacoes.html', protegerAdmin);
-app.use('/notificacoes.html', protegerAdmin);
-app.use('/raspadinha.html', protegerAdmin);
-
-
 // 🔹 Servir arquivos estáticos
 app.use(express.static(__dirname));
 
@@ -171,6 +163,13 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'final.html'));
 });
+
+app.use('/dashboard.html', protegerAdmin);
+app.use('/paineladm.html', protegerAdmin);
+app.use('/historico.html', protegerAdmin);
+app.use('/indicacoes.html', protegerAdmin);
+app.use('/notificacoes.html', protegerAdmin);
+app.use('/raspadinha.html', protegerAdmin);
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
@@ -463,7 +462,7 @@ app.post('/api/indicacoes', async (req, res) => {
     
     let indicacoesSalvas = 0;
     let erros = [];
-    let indicadosDetalhes = [];
+    let indicadosDetalhes = []; // 🆕 Para enviar ao Zapier
     
     try {
         for (let i = 0; i < indicacoes.length; i++) {
@@ -509,6 +508,7 @@ app.post('/api/indicacoes', async (req, res) => {
                             console.log(`  ✅ ${nome} cadastrado com ID: ${this.lastID}, indicado por: ${indicante_id}`);
                             indicacoesSalvas++;
                             
+                            // 🆕 Guardar detalhes para o Zapier
                             indicadosDetalhes.push({
                                 nome: nome,
                                 whatsapp: whatsapp,
@@ -540,79 +540,34 @@ app.post('/api/indicacoes', async (req, res) => {
                 );
             });
             
-            // 🆕 ENVIAR PARA O ZAPIER - VERSÃO CORRIGIDA
-            console.log('📤 Preparando dados para Zapier...');
-            
+            // 🆕 ENVIAR PARA O ZAPIER
             const dadosZapier = {
                 // Dados de quem indicou
-                indicante_nome: indicante_nome || 'Nome não informado',
-                indicante_email: indicante_email || 'Email não informado',
-                indicante_whatsapp: indicante_whatsapp || 'WhatsApp não informado',
+                indicante_nome: indicante_nome,
+                indicante_email: indicante_email,
+                indicante_whatsapp: indicante_whatsapp,
                 
                 // Quantas pessoas foram indicadas
                 total_indicacoes: indicacoesSalvas,
                 chances_ganhas: indicacoesSalvas,
                 
-                // Lista de nomes dos indicados (string separada por vírgula)
-                indicados_nomes: indicadosDetalhes.map(ind => ind.nome).join(', '),
+                // Lista de indicados
+                indicados: indicadosDetalhes.map(ind => ind.nome).join(', '),
+                indicados_detalhes: indicadosDetalhes,
                 
-                // Primeiro indicado (para facilitar no Zapier)
-                primeiro_indicado_nome: indicadosDetalhes[0]?.nome || '',
-                primeiro_indicado_email: indicadosDetalhes[0]?.email || '',
-                primeiro_indicado_whatsapp: indicadosDetalhes[0]?.whatsapp || '',
+                // Links para compartilhar
+                link_roleta: `http://SEU_DOMINIO:3000/final.html?secao=roleta`,
+                link_raspadinha: `http://SEU_DOMINIO:3000/final.html?secao=raspadinha`,
+                link_geral: `http://SEU_DOMINIO:3000/final.html`,
                 
-                // Segundo indicado (se houver)
-                segundo_indicado_nome: indicadosDetalhes[1]?.nome || '',
-                segundo_indicado_email: indicadosDetalhes[1]?.email || '',
-                segundo_indicado_whatsapp: indicadosDetalhes[1]?.whatsapp || '',
-                
-                // Terceiro indicado (se houver)
-                terceiro_indicado_nome: indicadosDetalhes[2]?.nome || '',
-                terceiro_indicado_email: indicadosDetalhes[2]?.email || '',
-                terceiro_indicado_whatsapp: indicadosDetalhes[2]?.whatsapp || '',
-                
-                // Links
-                link_geral: 'https://roleta-raspadinha.onrender.com',
-                
-                // Data e hora
-                data_indicacao: new Date().toLocaleString('pt-BR', {
-                    timeZone: 'America/Sao_Paulo',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }),
-                
-                // Timestamp para rastreamento
-                timestamp: Date.now()
+                // Data
+                data_indicacao: new Date().toLocaleString('pt-BR')
             };
             
-            console.log('📤 Enviando para Zapier:', dadosZapier);
-            
-            // Enviar para Zapier com tratamento de erro melhorado
-            try {
-                const zapierResponse = await fetch(ZAPIER_WEBHOOK_INDICACAO, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dadosZapier)
-                });
-                
-                const responseText = await zapierResponse.text();
-                
-                if (zapierResponse.ok) {
-                    console.log('✅ Zapier notificado com sucesso!');
-                    console.log('📥 Resposta do Zapier:', responseText);
-                } else {
-                    console.error('❌ Erro ao notificar Zapier. Status:', zapierResponse.status);
-                    console.error('📥 Resposta:', responseText);
-                }
-            } catch (zapierError) {
-                console.error('❌ Erro ao enviar para Zapier:', zapierError.message);
-                console.error('Stack:', zapierError.stack);
-            }
+            // Enviar para Zapier (não espera resposta)
+            enviarParaZapier(ZAPIER_WEBHOOK_INDICACAO, dadosZapier).catch(err => {
+                console.error('⚠️ Erro ao enviar para Zapier (não crítico):', err);
+            });
         }
         
         if (indicacoesSalvas > 0) {
@@ -1257,7 +1212,7 @@ app.post('/api/registrar-sorteio', async (req, res) => {
             }),
             
             // 🔗 Links úteis
-            link_sistema: `https://roleta-raspadinha.onrender.com`,
+            link_sistema: `http://localhost:${PORT}/final.html`,
             
             // 🆔 ID para rastreamento
             sorteio_id: sorteioId,
@@ -1298,6 +1253,54 @@ app.post('/api/registrar-sorteio', async (req, res) => {
     }
 });
 
+// 🧪 ROTA DE TESTE DO ZAPIER
+app.get('/api/testar-zapier', async (req, res) => {
+    console.log('🧪 Testando envio para Zapier...');
+    
+    const dadosTeste = {
+        nome: 'João Teste',
+        email: 'joao@teste.com',
+        whatsapp: '11999999999',
+        premio: 'Teste de Prêmio 🎁',
+        premio_descricao: 'Apenas um teste do sistema',
+        premio_icone: '🎁',
+        tipo_sorteio: 'Teste Manual',
+        data_sorteio: new Date().toLocaleString('pt-BR'),
+        sorteio_id: 999,
+        timestamp: Date.now()
+    };
+    
+    try {
+        console.log('📤 Enviando dados de teste:', dadosTeste);
+        
+        const resultado = await enviarParaZapier(ZAPIER_WEBHOOK_PREMIO, dadosTeste);
+        
+        if (resultado) {
+            console.log('✅ Teste bem-sucedido!');
+            res.json({ 
+                success: true, 
+                mensagem: '✅ Zapier recebeu os dados!',
+                dados_enviados: dadosTeste,
+                webhook_url: ZAPIER_WEBHOOK_PREMIO
+            });
+        } else {
+            console.log('❌ Teste falhou - Zapier não respondeu OK');
+            res.json({ 
+                success: false, 
+                erro: 'Zapier não respondeu com status 200',
+                dados_enviados: dadosTeste,
+                webhook_url: ZAPIER_WEBHOOK_PREMIO
+            });
+        }
+    } catch (error) {
+        console.error('❌ Erro no teste:', error);
+        res.status(500).json({ 
+            success: false, 
+            erro: error.message,
+            dados_enviados: dadosTeste 
+        });
+    }
+});
 
 
 
@@ -2178,6 +2181,302 @@ app.get('/api/corrigir-horarios', (req, res) => {
         });
     });
 });
+
+// Tabela para controlar sorteios sincronizados
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS sorteios_sincronizados (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            seed TEXT NOT NULL,
+            indice_vencedor INTEGER NOT NULL,
+            total_participantes INTEGER NOT NULL,
+            premio_id INTEGER,
+            premio_nome TEXT,
+            participante_id INTEGER,
+            participante_nome TEXT,
+            participante_email TEXT,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) console.error('Erro ao criar tabela sorteios_sincronizados:', err);
+        else console.log('✅ Tabela sorteios_sincronizados OK');
+    });
+});
+
+// ============================================
+// ROTA: GERAR SORTEIO SINCRONIZADO
+// ============================================
+
+app.post('/api/gerar-sorteio-sincronizado', async (req, res) => {
+    const { total_participantes, premio_id, premio_nome } = req.body;
+    
+    console.log('🎰 [SYNC] Gerando sorteio sincronizado...', {
+        total_participantes,
+        premio_id,
+        premio_nome
+    });
+    
+    if (!total_participantes || total_participantes <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'Total de participantes inválido'
+        });
+    }
+    
+    try {
+        // 1️⃣ GERAR SEED ÚNICO (timestamp + random)
+        const seed = Date.now().toString() + Math.floor(Math.random() * 10000);
+        
+        // 2️⃣ CALCULAR ÍNDICE DO VENCEDOR (mesmo algoritmo do client)
+        const indice_vencedor = parseInt(seed) % total_participantes;
+        
+        console.log('🎯 [SYNC] Seed gerado:', seed);
+        console.log('🎯 [SYNC] Índice do vencedor:', indice_vencedor);
+        
+        // 3️⃣ BUSCAR PARTICIPANTES ATIVOS
+        const participantes = await new Promise((resolve, reject) => {
+            db.all(
+                'SELECT * FROM participantes WHERE sorteado = 0 ORDER BY nome',
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                }
+            );
+        });
+        
+        if (participantes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nenhum participante disponível'
+            });
+        }
+        
+        if (indice_vencedor >= participantes.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'Índice do vencedor fora dos limites'
+            });
+        }
+        
+        const vencedor = participantes[indice_vencedor];
+        
+        console.log('👤 [SYNC] Vencedor selecionado:', vencedor.nome);
+        
+        // 4️⃣ SALVAR NO BANCO
+        const sorteio_id = await new Promise((resolve, reject) => {
+            db.run(
+                `INSERT INTO sorteios_sincronizados 
+                (seed, indice_vencedor, total_participantes, premio_id, premio_nome, 
+                 participante_id, participante_nome, participante_email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    seed,
+                    indice_vencedor,
+                    total_participantes,
+                    premio_id || 0,
+                    premio_nome || 'Prêmio',
+                    vencedor.id,
+                    vencedor.nome,
+                    vencedor.email
+                ],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.lastID);
+                }
+            );
+        });
+        
+        console.log('✅ [SYNC] Sorteio sincronizado salvo! ID:', sorteio_id);
+        
+        // 5️⃣ RETORNAR RESULTADO
+        res.json({
+            success: true,
+            sorteio: {
+                id: sorteio_id,
+                seed: seed,
+                indice_vencedor: indice_vencedor,
+                total_participantes: total_participantes,
+                premio_id: premio_id,
+                premio_nome: premio_nome,
+                vencedor: {
+                    id: vencedor.id,
+                    nome: vencedor.nome,
+                    email: vencedor.email,
+                    whatsapp: vencedor.whatsapp
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ [SYNC] Erro ao gerar sorteio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro ao gerar sorteio: ' + error.message
+        });
+    }
+});
+
+// ============================================
+// ROTA: BUSCAR SORTEIO SINCRONIZADO POR SEED
+// ============================================
+
+app.get('/api/sorteio-sincronizado/:seed', (req, res) => {
+    const { seed } = req.params;
+    
+    db.get(
+        'SELECT * FROM sorteios_sincronizados WHERE seed = ? ORDER BY data_criacao DESC LIMIT 1',
+        [seed],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+            
+            if (!row) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Sorteio não encontrado'
+                });
+            }
+            
+            res.json({
+                success: true,
+                sorteio: row
+            });
+        }
+    );
+});
+
+// ============================================
+// ROTA CORRIGIDA: /api/enviar-comando
+// Substitua a versão existente por esta
+// ============================================
+
+app.post('/api/enviar-comando', async (req, res) => {
+    const comando = req.body;
+    console.log('📨 [API] Comando recebido:', comando);
+    
+    // Se for comando de sorteio, gerar sorteio sincronizado
+    if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
+        console.log('🎰 [SYNC] Gerando sorteio sincronizado para comando...');
+        
+        try {
+            // 1️⃣ Buscar participantes ativos
+            const participantes = await new Promise((resolve, reject) => {
+                db.all(
+                    'SELECT * FROM participantes WHERE sorteado = 0 ORDER BY nome',
+                    (err, rows) => {
+                        if (err) reject(err);
+                        else resolve(rows || []);
+                    }
+                );
+            });
+            
+            if (participantes.length === 0) {
+                console.error('❌ [SYNC] Nenhum participante disponível');
+                return res.status(400).json({
+                    success: false,
+                    error: 'Nenhum participante disponível'
+                });
+            }
+            
+            console.log(`👥 [SYNC] ${participantes.length} participantes encontrados`);
+            
+            // 2️⃣ Gerar seed ÚNICO (timestamp + random)
+            const seed = Date.now().toString() + Math.floor(Math.random() * 10000);
+            const indice_vencedor = parseInt(seed) % participantes.length;
+            
+            const vencedor = participantes[indice_vencedor];
+            
+            console.log('🎯 [SYNC] Seed gerado:', seed);
+            console.log('🎯 [SYNC] Índice do vencedor:', indice_vencedor);
+            console.log('👤 [SYNC] Vencedor:', vencedor.nome);
+            
+            // 3️⃣ Salvar no banco (auditoria)
+            try {
+                await new Promise((resolve, reject) => {
+                    db.run(
+                        `INSERT INTO sorteios_sincronizados 
+                        (seed, indice_vencedor, total_participantes, participante_id, participante_nome, participante_email)
+                        VALUES (?, ?, ?, ?, ?, ?)`,
+                        [
+                            seed,
+                            indice_vencedor,
+                            participantes.length,
+                            vencedor.id,
+                            vencedor.nome,
+                            vencedor.email
+                        ],
+                        (err) => err ? reject(err) : resolve()
+                    );
+                });
+                console.log('💾 [SYNC] Sorteio salvo no banco');
+            } catch (dbError) {
+                console.error('⚠️ [SYNC] Erro ao salvar no banco (não crítico):', dbError);
+            }
+            
+            // 4️⃣ Armazenar comando COM os dados sincronizados
+            comandoPendente = {
+                ...comando,
+                seed: seed,
+                indice_vencedor: indice_vencedor,
+                total_participantes: participantes.length,
+                vencedor: {
+                    id: vencedor.id,
+                    nome: vencedor.nome,
+                    email: vencedor.email,
+                    whatsapp: vencedor.whatsapp
+                },
+                timestamp: Date.now()
+            };
+            
+            console.log('💾 [SYNC] Comando sincronizado armazenado');
+            
+        } catch (error) {
+            console.error('❌ [SYNC] Erro ao gerar seed:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Erro ao gerar sorteio sincronizado: ' + error.message
+            });
+        }
+    } else {
+        // Comando normal (sem sincronização)
+        comandoPendente = {
+            ...comando,
+            timestamp: Date.now()
+        };
+        console.log('📋 [API] Comando normal armazenado');
+    }
+    
+    // 5️⃣ Notificar via SSE (se houver clientes conectados)
+    if (clientesConectados && clientesConectados.length > 0) {
+        const mensagem = JSON.stringify(comandoPendente);
+        
+        clientesConectados.forEach((client, index) => {
+            try {
+                client.res.write(`data: ${mensagem}\n\n`);
+                console.log(`📡 [SSE] Comando enviado para cliente ${index + 1}`);
+            } catch (error) {
+                console.error('❌ Erro ao enviar para cliente SSE:', error.message);
+            }
+        });
+        console.log(`📡 [SSE] Total: ${clientesConectados.length} cliente(s) notificados`);
+    }
+    
+    res.json({ 
+        success: true, 
+        clientesSSE: clientesConectados ? clientesConectados.length : 0,
+        comandoArmazenado: true,
+        sincronizado: !!comandoPendente.seed,
+        seed: comandoPendente.seed || null,
+        indice_vencedor: comandoPendente.indice_vencedor !== undefined ? comandoPendente.indice_vencedor : null,
+        vencedor: comandoPendente.vencedor || null
+    });
+});
+
+console.log('✅ Sistema de sorteio sincronizado configurado!');
 
 // ============================================
 // INICIAR SERVIDOR
