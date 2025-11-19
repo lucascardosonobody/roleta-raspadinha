@@ -2,6 +2,7 @@
 // CONFIGURAÇÃO CENTRAL DO SISTEMA
 // Arquivo: config.js
 // ============================================
+
 const CONFIG = {
     // 🌐 DETECÇÃO AUTOMÁTICA DE AMBIENTE
     get DOMAIN() {
@@ -9,8 +10,8 @@ const CONFIG = {
         if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
             return 'http://localhost:3000';
         }
-        // 🚀 PRODUÇÃO - Usar o domínio do Render
-        return 'https://roleta-raspadinha.onrender.com';
+        // Se estiver em produção, usa o domínio real
+        return 'https://geo-iot.com';
     },
 
     // 📡 ENDPOINTS DA API
@@ -34,8 +35,10 @@ const CONFIG = {
         LIMPAR_COMANDO: '/api/limpar-comando',
         EXECUTAR_SORTEIO_AUTOMATICO: '/api/executar-sorteio-automatico',
         SORTEIO_ATIVO_AGORA: '/api/sorteio-ativo-agora',
-        RASPADINHA_ATIVA_AGORA: '/api/raspadinha-ativa-agora'
+        RASPADINHA_ATIVA_AGORA: '/api/raspadinha-ativa-agora',
+        GERAR_SORTEIO_SINCRONIZADO: '/api/gerar-sorteio-sincronizado'
     },
+
 
     // 📁 CAMINHOS DOS ARQUIVOS
     PATHS: {
@@ -53,8 +56,8 @@ const CONFIG = {
         INDICACOES: '/indicacoes.html',
         
         // Recursos
-        IMAGES: '/images',
-        VIDEOS: '/videos'
+        IMAGES: '/assets/images',
+        VIDEOS: '/assets/videos'
     },
 
     // ⚙️ CONFIGURAÇÕES GERAIS
@@ -118,5 +121,3 @@ CONFIG.fetch = async function(endpoint, options = {}) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CONFIG;
 }
-
-console.log('✅ Config carregado! Ambiente:', CONFIG.DOMAIN);
