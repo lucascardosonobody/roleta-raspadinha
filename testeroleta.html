@@ -195,6 +195,7 @@
 
         .container {
             min-width: 0; /* Permite que o container encolha */
+            gap: 300px;
         }
 
         .roleta-wrapper {
@@ -652,11 +653,11 @@
         /* Mobile Pequeno */
         @media (max-width: 480px) {
             .topo-imagem {
-                height: 100%px;
+                height: 100%;
             }
 
             .content-wrapper {
-                gap: 8px;
+                gap: 5px;  /* ✅ REDUZIDO de 8px para 5px */
                 padding: 0px 5px;
             }
 
@@ -664,11 +665,13 @@
                 min-width: 350px;
                 height: 70px;
                 padding: 3px;
+                margin-top: 0;  /* ✅ ADICIONAR - Remove espaço superior */
             }
 
             .card-premios h3 {
                 font-size: 0.8em;
-                margin-bottom: 8px;
+                margin-bottom: 5px;  /* ✅ REDUZIDO de 8px para 5px */
+                margin-top: 0;  /* ✅ ADICIONAR */
             }
 
             .premio-item {
@@ -679,18 +682,18 @@
 
             h1 {
                 font-size: 0.5em;
-                margin-bottom: 8px;
+                margin-bottom: 5px;  /* ✅ REDUZIDO de 8px para 5px */
             }
 
             .info-participantes {
                 font-size: 0.7em;
                 padding: 5px 10px;
-                margin-bottom: 10px;
+                margin-bottom: 5px;  /* ✅ REDUZIDO de 10px para 5px */
             }
 
             .roleta-wrapper {
                 max-width: 210px;
-                margin-bottom: 15px;
+                margin-bottom: 5px;  /* ✅ REDUZIDO de 15px para 5px */
             }
 
             .centro-roleta {
