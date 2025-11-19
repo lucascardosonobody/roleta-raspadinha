@@ -70,7 +70,40 @@ app.get('/api/testar-zapier', async (req, res) => {
 
 
 // Middleware base
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://roleta-raspadinha.onrender.com',
+        'https://geo-iot.com',
+        'http://localhost:3000' // para testes locais
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+// Middleware adicional de CORS
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'https://roleta-raspadinha.onrender.com',
+        'https://geo-iot.com',
+        'http://localhost:3000'
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    // Responder OPTIONS requests imediatamente
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    
+    next();
+});
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true })); // pra ler <form method="POST">
 
