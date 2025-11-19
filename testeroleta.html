@@ -1405,47 +1405,75 @@
                     girando = true;
                     document.getElementById('resultado').classList.remove('ativo');
 
-                    // 🆕 SORTEIO SINCRONIZADO: Usar timestamp como seed
-                    const seed = Date.now();
-                    const indiceVencedor = seed % participantes.length;
-                    const vencedor = participantes[indiceVencedor];
-
-                    console.log('🎯 Seed usado:', seed);
-                    console.log('🎯 Índice do vencedor:', indiceVencedor);
-                    console.log('🎯 Vencedor sorteado:', vencedor.nome);
-
-                    // PEGAR O PRIMEIRO PRÊMIO DA FILA
-                    const premioSorteado = filaPremios[0];
-                    console.log('🎁 Prêmio sorteado:', premioSorteado.nome);
-
-                    // Calcular ângulo final
-                    const sliceAngle = (Math.PI * 2) / participantes.length;
-                    const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-                    const anguloSeta = -Math.PI / 2;
-                    const rotacoesCompletas = Math.PI * 2 * 5;
-                    const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
-
-                    // Animação
-                    const duracao = 5000;
-                    const inicio = Date.now();
-
-                    function animar() {
-                        const agora = Date.now();
-                        const progresso = Math.min((agora - inicio) / duracao, 1);
-                        const easeOut = 1 - Math.pow(1 - progresso, 3);
+                    // 🆕 SEMPRE SOLICITAR SORTEIO SINCRONIZADO DO SERVIDOR
+                    try {
+                        console.log('📡 Solicitando sorteio sincronizado ao servidor...');
                         
-                        anguloAtual = anguloFinal * easeOut;
-                        desenharRoleta();
+                        const response = await CONFIG.fetch(CONFIG.API.GERAR_SORTEIO_SINCRONIZADO, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                total_participantes: participantes.length,
+                                premio_id: filaPremios[0]?.id,
+                                premio_nome: filaPremios[0]?.nome
+                            })
+                        });
 
-                        if (progresso < 1) {
-                            requestAnimationFrame(animar);
-                        } else {
-                            console.log('✅ Animação da roleta concluída!');
-                            mostrarResultado(vencedor, premioSorteado);
+                        if (!response.success) {
+                            throw new Error(response.message || 'Erro ao gerar sorteio');
                         }
-                    }
 
-                    animar();
+                        const sorteio = response.sorteio;
+                        
+                        console.log('✅ Sorteio sincronizado recebido:', sorteio);
+                        console.log('🎯 Seed:', sorteio.seed);
+                        console.log('🎯 Índice do vencedor:', sorteio.indice_vencedor);
+                        console.log('👤 Vencedor:', sorteio.vencedor.nome);
+
+                        // ✅ USAR O ÍNDICE FORNECIDO PELO SERVIDOR
+                        const indiceVencedor = sorteio.indice_vencedor;
+                        const vencedor = participantes[indiceVencedor];
+
+                        if (!vencedor) {
+                            throw new Error(`Vencedor não encontrado no índice ${indiceVencedor}`);
+                        }
+
+                        // Pegar o prêmio da fila
+                        const premioSorteado = filaPremios[0];
+
+                        // Calcular ângulo final
+                        const sliceAngle = (Math.PI * 2) / participantes.length;
+                        const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+                        const anguloSeta = -Math.PI / 2;
+                        const rotacoesCompletas = Math.PI * 2 * 5;
+                        const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+
+                        // Animação
+                        const duracao = 5000;
+                        const inicio = Date.now();
+
+                        function animar() {
+                            const agora = Date.now();
+                            const progresso = Math.min((agora - inicio) / duracao, 1);
+                            const easeOut = 1 - Math.pow(1 - progresso, 3);
+                            
+                            anguloAtual = anguloFinal * easeOut;
+                            desenharRoleta();
+
+                            if (progresso < 1) {
+                                requestAnimationFrame(animar);
+                            } else {
+                                console.log('✅ Animação da roleta concluída!');
+                                mostrarResultado(vencedor, premioSorteado);
+                            }
+                        }
+
+                        animar();
+
+                    } catch (error) {
+                        console.error('❌ Erro ao solicitar sorteio sincronizado:', error);
+                        alert('Erro ao realizar sorteio. Tente novamente.');
+                        girando = false;
+                    }
                 }
 
                 async function mostrarResultado(vencedor, premio) {
@@ -1589,92 +1617,128 @@
             }
         }
 
-        // Função de girar automático (igual ao manual mas chama a API)
-        async function girarRoletaAutomatico() {
-            // Garantir que a logo está visível durante o giro
-            document.getElementById('logoRoleta').style.display = 'block';
-            document.getElementById('mensagemAguardando').style.display = 'none';
+
+
+async function processarComando(comando) {
+    logPolling('⚙️', 'Processando comando:', JSON.stringify(comando));
+    
+    // Verificar tipo de comando
+    if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
+        logPolling('🎯', 'Comando de sorteio detectado!');
+        
+        // 🆕 SE O COMANDO TEM SEED E ÍNDICE, É UM SORTEIO SINCRONIZADO
+        if (comando.seed && comando.indice_vencedor !== undefined) {
+            logPolling('🔄', 'Sorteio SINCRONIZADO detectado!');
+            logPolling('📋', `Seed: ${comando.seed}, Índice: ${comando.indice_vencedor}`);
             
-            if (girando) return;
-            if (participantes.length === 0) {
-                console.log('❌ Nenhum participante disponível');
-                return;
-            }
-            if (filaPremios.length === 0) {
-                console.log('❌ Nenhum prêmio disponível');
-                return;
-            }
-
-            girando = true;
-            document.getElementById('resultado').classList.remove('ativo');
+            await executarSorteioSincronizado(comando);
+        } else {
+            // ⚠️ COMANDO SEM SINCRONIZAÇÃO
+            logPolling('⚠️', 'Comando SEM sincronização detectado!');
+            logPolling('ℹ️', 'Solicitando sorteio ao servidor...');
             
-            try {
-                // CHAMAR API DE SORTEIO AUTOMÁTICO
-                console.log('📡 Chamando API de sorteio automático...');
-                const resultado = await CONFIG.fetch(CONFIG.API.EXECUTAR_SORTEIO_AUTOMATICO, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                console.log('✅ Resultado do sorteio:', resultado);
-
-                const vencedor = resultado.resultado.participante;
-                const premioSorteado = resultado.resultado.premio;
-                
-                // Encontrar índice do vencedor na lista de participantes
-                const indiceVencedor = participantes.findIndex(p => 
-                    p.email === vencedor.email || p.nome === vencedor.nome
-                );
-                
-                if (indiceVencedor === -1) {
-                    console.error('❌ Vencedor não encontrado na lista');
-                    girando = false;
-                    return;
-                }
-
-                // Calcular ângulo final
-                // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
-                const sliceAngle = (Math.PI * 2) / participantes.length;
-
-                // Ângulo do vencedor em relação à posição inicial
-                const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-
-                // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-                // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
-                const anguloSeta = -Math.PI / 2;
-
-                // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-                const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
-                const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
-
-                // Animação
-                const duracao = 5000;
-                const inicio = Date.now();
-
-                function animar() {
-                    const agora = Date.now();
-                    const progresso = Math.min((agora - inicio) / duracao, 1);
-                    
-                    // Easing (desaceleração)
-                    const easeOut = 1 - Math.pow(1 - progresso, 3);
-                    
-                    anguloAtual = anguloFinal * easeOut;
-                    desenharRoleta();
-
-                    if (progresso < 1) {
-                        requestAnimationFrame(animar);
-                    } else {
-                        mostrarResultadoAutomatico(vencedor, premioSorteado);
-                    }
-                }
-
-                animar();
-                
-            } catch (error) {
-                console.error('❌ Erro ao executar sorteio automático:', error);
-                girando = false;
-            }
+            // Recarregar dados
+            await carregarDados();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Iniciar sorteio (que vai solicitar seed ao servidor)
+            await girarRoleta();
         }
+    } else {
+        logPolling('ℹ️', `Tipo de comando não reconhecido: ${comando.tipo || 'undefined'}`);
+    }
+}
+
+
+async function processarComando(comando) {
+    logPolling('⚙️', 'Processando comando:', JSON.stringify(comando));
+    
+    // Verificar tipo de comando
+    if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
+        logPolling('🎯', 'Comando de sorteio detectado!');
+        
+        // 🆕 SE O COMANDO TEM SEED, É UM SORTEIO SINCRONIZADO
+        if (comando.seed && comando.indice_vencedor !== undefined) {
+            logPolling('🔄', 'Sorteio SINCRONIZADO detectado!');
+            await executarSorteioSincronizado(comando);
+        } else {
+            // Sorteio normal (solicita ao servidor)
+            logPolling('🎰', 'Iniciando sorteio normal...');
+            
+            // Recarregar dados
+            await carregarDados();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Iniciar sorteio (que agora pede pro servidor)
+            await girarRoleta();
+        }
+    } else {
+        logPolling('ℹ️', `Tipo de comando não reconhecido: ${comando.tipo || 'undefined'}`);
+    }
+}
+
+// ============================================
+// 5️⃣ NOVA FUNÇÃO: executarSorteioSincronizado()
+// ============================================
+
+async function executarSorteioSincronizado(comando) {
+    logPolling('🎯', 'Executando sorteio sincronizado:', comando);
+    
+    // Recarregar dados para garantir que está atualizado
+    await carregarDados();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (participantes.length === 0) {
+        logPolling('❌', 'Nenhum participante disponível');
+        return;
+    }
+    
+    const indiceVencedor = comando.indice_vencedor;
+    const vencedor = participantes[indiceVencedor];
+    
+    if (!vencedor) {
+        logPolling('❌', 'Vencedor não encontrado no índice', indiceVencedor);
+        return;
+    }
+    
+    logPolling('✅', 'Vencedor sincronizado:', vencedor.nome);
+    
+    // Garantir que a logo está visível
+    document.getElementById('logoRoleta').style.display = 'block';
+    document.getElementById('mensagemAguardando').style.display = 'none';
+    
+    // Animar roleta
+    girando = true;
+    document.getElementById('resultado').classList.remove('ativo');
+    
+    const sliceAngle = (Math.PI * 2) / participantes.length;
+    const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+    const anguloSeta = -Math.PI / 2;
+    const rotacoesCompletas = Math.PI * 2 * 5;
+    const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
+    
+    const duracao = 5000;
+    const inicio = Date.now();
+    
+    function animar() {
+        const agora = Date.now();
+        const progresso = Math.min((agora - inicio) / duracao, 1);
+        const easeOut = 1 - Math.pow(1 - progresso, 3);
+        
+        anguloAtual = anguloFinal * easeOut;
+        desenharRoleta();
+        
+        if (progresso < 1) {
+            requestAnimationFrame(animar);
+        } else {
+            logPolling('🎉', 'Animação concluída!');
+            mostrarResultado(vencedor, filaPremios[0]);
+        }
+    }
+    
+    animar();
+}
+
 
         // Mostrar resultado do sorteio automático
         async function mostrarResultadoAutomatico(vencedor, premio) {
@@ -1837,17 +1901,27 @@
 
             if (indiceVencedor === -1) {
                 console.error('❌ Vencedor não encontrado na lista de participantes');
+                console.log('Vencedor procurado:', vencedor);
+                console.log('Participantes disponíveis:', participantes);
                 girando = false;
                 return;
             }
 
             console.log(`✅ Vencedor encontrado no índice ${indiceVencedor}`);
 
-            // Calcular ângulo final
+            // Calcular ângulo final para parar no vencedor
+            // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
             const sliceAngle = (Math.PI * 2) / participantes.length;
+                    
+            // Ângulo do vencedor em relação à posição inicial
             const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+                    
+            // A seta está no topo (ângulo = -PI/2 ou 270 graus)
+            // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
             const anguloSeta = -Math.PI / 2;
-            const rotacoesCompletas = Math.PI * 2 * 5;
+                    
+            // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
+            const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
             const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
             // Animação
@@ -1857,6 +1931,8 @@
             function animar() {
                 const agora = Date.now();
                 const progresso = Math.min((agora - inicio) / duracao, 1);
+
+                // Easing (desaceleração suave)
                 const easeOut = 1 - Math.pow(1 - progresso, 3);
 
                 anguloAtual = anguloFinal * easeOut;
@@ -1865,6 +1941,7 @@
                 if (progresso < 1) {
                     requestAnimationFrame(animar);
                 } else {
+                    // Animação concluída, mostrar resultado
                     console.log('🎉 Animação concluída!');
                     mostrarResultado(vencedor, premio);
                 }
