@@ -1,163 +1,16 @@
 const express = require('express');
-const session = require('express-session');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-
-// ==== LOGIN DO ADMIN ====
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'unisense#2025'; // troque pra uma senha forte de verdade depois
-
-// ==== WEBHOOKS DO ZAPIER ====
-const ZAPIER_WEBHOOK_PREMIO = 'https://hooks.zapier.com/hooks/catch/25364211/u8wlf1i/';
-const ZAPIER_WEBHOOK_INDICACAO = 'https://hooks.zapier.com/hooks/catch/SEU_ID_AQUI/indicacao';
-
-// Função para enviar dados ao Zapier
-async function enviarParaZapier(webhookUrl, dados) {
-    try {
-        console.log('📤 Enviando para Zapier:', dados);
-        
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dados)
-        });
-        
-        if (response.ok) {
-            console.log('✅ Zapier notificado com sucesso');
-            return true;
-        } else {
-            console.error('❌ Erro ao notificar Zapier:', response.status);
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ Erro ao enviar para Zapier:', error);
-        return false;
-    }
-}
-
-// 🧪 ROTA DE TESTE DO ZAPIER — precisa ficar ANTES do protegerAdmin
-app.get('/api/testar-zapier', async (req, res) => {
-    console.log('🧪 Testando envio para Zapier...');
-
-    const dadosTeste = {
-        nome: 'João Teste',
-        email: 'lcc172007@gmail.com',
-        whatsapp: '11999999999',
-        premio: 'Teste de Prêmio 🎁',
-        premio_descricao: 'Apenas um teste do sistema',
-        premio_icone: '🎁',
-        tipo_sorteio: 'Teste Manual',
-        data_sorteio: new Date().toLocaleString('pt-BR'),
-        sorteio_id: 999,
-        timestamp: Date.now()
-    };
-
-    try {
-        const resultado = await enviarParaZapier(ZAPIER_WEBHOOK_PREMIO, dadosTeste);
-        res.json({ success: resultado, dados_enviados: dadosTeste });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-
-// Middleware base
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: true })); // pra ler <form method="POST">
-
-// Sessão (login)
-app.use(session({
-    secret: 'umaSenhaBemSecretaAqui', // TROCA ISSO DEPOIS
-    resave: false,
-    saveUninitialized: false,
-}));
-
-// 🔒 Middleware de proteção para páginas administrativas
-function protegerAdmin(req, res, next) {
-    const path = req.path;
-
-    console.log('[protegerAdmin]', {
-        path: path,
-        logado: !!(req.session && req.session.adminLogado),
-        sessionID: req.sessionID || 'sem sessão'
-    });
-
-    // Lista de páginas que PRECISAM de login
-    const paginasProtegidas = [
-        '/dashboard.html',
-        '/paineladm.html', 
-        '/historico.html',
-        '/indicacoes.html',
-        '/notificacoes.html',
-        '/raspadinha.html'
-    ];
-
-    // Se for página protegida e NÃO estiver logado
-    if (paginasProtegidas.includes(path)) {
-        if (!req.session || !req.session.adminLogado) {
-            console.log('❌ Acesso negado - redirecionando para login');
-            // 🆕 ADICIONAR A PÁGINA ORIGINAL NO REDIRECT
-            return res.redirect(`/login.html?redirect=${encodeURIComponent(path)}`);
-        }
-        
-        console.log('✅ Acesso permitido ao', path);
-    }
-
-    return next();
-}
-
-// ⚠️ ROTAS DE AUTENTICAÇÃO DEVEM VIR ANTES DO MIDDLEWARE!
-app.post('/login', (req, res) => {
-    const { usuario, senha } = req.body;
-    console.log('[POST /login] body =', req.body);
-
-    if (usuario === ADMIN_USER && senha === ADMIN_PASS) {
-        req.session.adminLogado = true;
-        console.log('✅ Admin logado com sucesso');
-        
-        // 🆕 VERIFICAR SE TEM REDIRECT NA QUERY
-        const redirect = req.query.redirect || '/dashboard.html';
-        console.log('📍 Redirecionando para:', redirect);
-        
-        return res.redirect(redirect);
-    }
-
-    console.log('❌ Login inválido');
-    
-    // 🆕 MANTER O REDIRECT MESMO COM ERRO
-    const redirect = req.query.redirect ? `&redirect=${encodeURIComponent(req.query.redirect)}` : '';
-    return res.redirect(`/login.html?erro=1${redirect}`);
-});
-
-app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login.html');
-    });
-});
-
-// Aplicar middleware ANTES de servir arquivos estáticos
-app.use(protegerAdmin);
-
-// Logo após a linha do express.static, adicione:
-app.use(express.static(__dirname));
-
-// Rota principal - redirecionar para final.html
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'final.html'));
-});
-
-// 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
-
-
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Banco de dados
 const dbPath = path.join(__dirname, 'sorteios.db');
@@ -168,6 +21,288 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.log('✅ Conectado ao banco de dados SQLite');
         criarTabelas();
     }
+});
+
+// ============================================
+// INICIALIZAÇÃO DO BANCO DE DADOS
+// ============================================
+db.serialize(() => {
+    console.log('\n🔧 Criando estrutura do banco de dados...\n');
+    
+    // TABELA PARTICIPANTES
+    db.run(`
+        CREATE TABLE IF NOT EXISTS participantes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            whatsapp TEXT NOT NULL,
+            chances INTEGER DEFAULT 5,
+            sorteado INTEGER DEFAULT 0,
+            indicado_por INTEGER,
+            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (indicado_por) REFERENCES participantes(id)
+        )
+    `, (err) => {
+        if (err) console.error('❌ Erro tabela participantes:', err);
+        else console.log('✅ Tabela participantes criada');
+    });
+    
+    // TABELA PREMIOS
+    db.run(`
+        CREATE TABLE IF NOT EXISTS premios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo TEXT NOT NULL,
+            nome TEXT NOT NULL,
+            descricao TEXT,
+            valor REAL,
+            imagem TEXT,
+            quantidade_disponivel INTEGER DEFAULT 1,
+            ativo INTEGER DEFAULT 1,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) console.error('❌ Erro tabela premios:', err);
+        else console.log('✅ Tabela premios criada');
+    });
+    
+    // TABELA SORTEIOS
+    db.run(`
+        CREATE TABLE IF NOT EXISTS sorteios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            premio_id INTEGER NOT NULL,
+            vencedor_id INTEGER,
+            participantes_necessarios INTEGER DEFAULT 100,
+            data_sorteio DATETIME,
+            ativo INTEGER DEFAULT 1,
+            concluido INTEGER DEFAULT 0,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (premio_id) REFERENCES premios(id),
+            FOREIGN KEY (vencedor_id) REFERENCES participantes(id)
+        )
+    `, (err) => {
+        if (err) console.error('❌ Erro tabela sorteios:', err);
+        else console.log('✅ Tabela sorteios criada');
+    });
+    
+    // TABELA RASPADINHAS
+    db.run(`
+        CREATE TABLE IF NOT EXISTS raspadinhas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            participante_id INTEGER NOT NULL,
+            premio_id INTEGER,
+            ganhou INTEGER DEFAULT 0,
+            data_raspada DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (participante_id) REFERENCES participantes(id),
+            FOREIGN KEY (premio_id) REFERENCES premios(id)
+        )
+    `, (err) => {
+        if (err) console.error('❌ Erro tabela raspadinhas:', err);
+        else console.log('✅ Tabela raspadinhas criada');
+    });
+    
+    // TABELA RASPADINHAS_AGENDADAS
+    db.run(`
+        CREATE TABLE IF NOT EXISTS raspadinhas_agendadas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            premio_id INTEGER NOT NULL,
+            quantidade INTEGER DEFAULT 10,
+            ativo INTEGER DEFAULT 1,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (premio_id) REFERENCES premios(id)
+        )
+    `, (err) => {
+        if (err) console.error('❌ Erro tabela raspadinhas_agendadas:', err);
+        else console.log('✅ Tabela raspadinhas_agendadas criada');
+    });
+    
+    // Inserir prêmios de exemplo
+    setTimeout(() => {
+        db.get('SELECT COUNT(*) as total FROM premios', (err, row) => {
+            if (!err && row.total === 0) {
+                console.log('\n📝 Inserindo prêmios de exemplo...\n');
+                
+                const premios = [
+                    ['roleta', 'iPhone 15 Pro', '128GB', 7999.99],
+                    ['roleta', 'Notebook Gamer', 'RTX 4060', 5999.99],
+                    ['raspadinha', 'Vale-Compras R$ 100', 'Qualquer loja', 100.00],
+                    ['raspadinha', 'Fone Bluetooth', 'Premium', 299.99],
+                    ['raspadinha', 'Tente Novamente', 'Não ganhou', 0]
+                ];
+                
+                premios.forEach(([tipo, nome, desc, valor]) => {
+                    db.run(
+                        'INSERT INTO premios (tipo, nome, descricao, valor, ativo) VALUES (?, ?, ?, ?, 1)',
+                        [tipo, nome, desc, valor],
+                        (err) => {
+                            if (!err) console.log(`✅ Prêmio: ${nome}`);
+                        }
+                    );
+                });
+            }
+            console.log('\n✅ Banco de dados pronto!\n');
+        });
+    }, 500);
+});
+
+// ============================================
+// INICIALIZAÇÃO AUTOMÁTICA DO BANCO DE DADOS
+// ============================================
+db.serialize(() => {
+    console.log('🔧 Verificando estrutura do banco de dados...');
+    
+    // Criar tabela participantes com todas as colunas necessárias
+    db.run(`
+        CREATE TABLE IF NOT EXISTS participantes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            whatsapp TEXT NOT NULL,
+            chances INTEGER DEFAULT 5,
+            sorteado INTEGER DEFAULT 0,
+            indicado_por INTEGER,
+            data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (indicado_por) REFERENCES participantes(id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela participantes:', err);
+        } else {
+            console.log('✅ Tabela "participantes" verificada');
+            
+            // Verificar se a coluna chances existe
+            db.get("PRAGMA table_info(participantes)", (err, row) => {
+                if (err) {
+                    console.error('❌ Erro ao verificar colunas:', err);
+                    return;
+                }
+                
+                // Adicionar coluna chances se não existir
+                db.run(`ALTER TABLE participantes ADD COLUMN chances INTEGER DEFAULT 5`, (err) => {
+                    if (err && !err.message.includes('duplicate column')) {
+                        console.error('⚠️ Aviso ao adicionar coluna chances:', err.message);
+                    } else if (!err) {
+                        console.log('✅ Coluna "chances" adicionada!');
+                        
+                        // Atualizar participantes existentes
+                        db.run(`UPDATE participantes SET chances = 5 WHERE chances IS NULL`, (err) => {
+                            if (!err) {
+                                console.log('✅ Chances inicializadas para participantes existentes');
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    });
+    
+    // Criar tabela premios
+    db.run(`
+        CREATE TABLE IF NOT EXISTS premios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo TEXT NOT NULL,
+            nome TEXT NOT NULL,
+            descricao TEXT,
+            valor REAL,
+            imagem TEXT,
+            quantidade_disponivel INTEGER DEFAULT 1,
+            ativo INTEGER DEFAULT 1,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela premios:', err);
+        } else {
+            console.log('✅ Tabela "premios" verificada');
+        }
+    });
+    
+    // Criar tabela sorteios
+    db.run(`
+        CREATE TABLE IF NOT EXISTS sorteios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            premio_id INTEGER NOT NULL,
+            vencedor_id INTEGER,
+            participantes_necessarios INTEGER DEFAULT 100,
+            data_sorteio DATETIME,
+            ativo INTEGER DEFAULT 1,
+            concluido INTEGER DEFAULT 0,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (premio_id) REFERENCES premios(id),
+            FOREIGN KEY (vencedor_id) REFERENCES participantes(id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela sorteios:', err);
+        } else {
+            console.log('✅ Tabela "sorteios" verificada');
+        }
+    });
+    
+    // Criar tabela raspadinhas
+    db.run(`
+        CREATE TABLE IF NOT EXISTS raspadinhas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            participante_id INTEGER NOT NULL,
+            premio_id INTEGER,
+            ganhou INTEGER DEFAULT 0,
+            data_raspada DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (participante_id) REFERENCES participantes(id),
+            FOREIGN KEY (premio_id) REFERENCES premios(id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela raspadinhas:', err);
+        } else {
+            console.log('✅ Tabela "raspadinhas" verificada');
+        }
+    });
+    
+    // Criar tabela raspadinhas_agendadas
+    db.run(`
+        CREATE TABLE IF NOT EXISTS raspadinhas_agendadas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            premio_id INTEGER NOT NULL,
+            quantidade INTEGER DEFAULT 10,
+            ativo INTEGER DEFAULT 1,
+            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (premio_id) REFERENCES premios(id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Erro ao criar tabela raspadinhas_agendadas:', err);
+        } else {
+            console.log('✅ Tabela "raspadinhas_agendadas" verificada');
+        }
+    });
+    
+    // Inserir prêmios de exemplo se não existirem
+    db.get('SELECT COUNT(*) as total FROM premios', (err, row) => {
+        if (!err && row.total === 0) {
+            console.log('📝 Inserindo prêmios de exemplo...');
+            
+            const premios = [
+                { tipo: 'roleta', nome: 'iPhone 15 Pro', descricao: '128GB', valor: 7999.99 },
+                { tipo: 'roleta', nome: 'Notebook Gamer', descricao: 'RTX 4060', valor: 5999.99 },
+                { tipo: 'raspadinha', nome: 'Vale-Compras R$ 100', descricao: 'Qualquer loja', valor: 100.00 },
+                { tipo: 'raspadinha', nome: 'Fone Bluetooth', descricao: 'Premium', valor: 299.99 },
+                { tipo: 'raspadinha', nome: 'Tente Novamente', descricao: 'Não ganhou desta vez', valor: 0 }
+            ];
+            
+            premios.forEach(premio => {
+                db.run(
+                    `INSERT INTO premios (tipo, nome, descricao, valor, ativo) VALUES (?, ?, ?, ?, 1)`,
+                    [premio.tipo, premio.nome, premio.descricao, premio.valor],
+                    (err) => {
+                        if (!err) {
+                            console.log(`✅ Prêmio "${premio.nome}" inserido`);
+                        }
+                    }
+                );
+            });
+        }
+    });
+    
+    console.log('✅ Inicialização do banco de dados concluída!\n');
 });
 
 // Criar tabelas
@@ -181,52 +316,13 @@ function criarTabelas() {
                 email TEXT NOT NULL UNIQUE,
                 whatsapp TEXT NOT NULL,
                 data_cadastro DATETIME DEFAULT CURRENT_TIMESTAMP,
-                sorteado INTEGER DEFAULT 0,
-                data_sorteio DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime'))
+                sorteado INTEGER DEFAULT 0
             )
         `, (err) => {
             if (err) console.error('Erro ao criar tabela participantes:', err);
             else console.log('✅ Tabela participantes OK');
         });
 
-
-        
-        // Logo APÓS este bloco:
-        // db.run(`CREATE TABLE IF NOT EXISTS participantes...`, (err) => { ... });
-
-        // 🆕 ADICIONE ESTAS LINHAS:
-        db.run(`ALTER TABLE participantes ADD COLUMN chances INTEGER DEFAULT 5`, (err) => {
-            if (err && !err.message.includes('duplicate column')) {
-                console.error('⚠️ Aviso ao adicionar coluna chances:', err.message);
-            } else if (!err) {
-                console.log('✅ Coluna chances adicionada');
-            }
-        });
-
-        // Tabela de avaliações do Google
-        db.run(`
-            CREATE TABLE IF NOT EXISTS avaliacoes_google (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                participante_id INTEGER NOT NULL,
-                participante_nome TEXT NOT NULL,
-                participante_email TEXT NOT NULL,
-                data_avaliacao DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (participante_id) REFERENCES participantes(id)
-            )
-        `, (err) => {
-            if (err) console.error('Erro ao criar tabela avaliacoes_google:', err);
-            else console.log('✅ Tabela avaliacoes_google OK');
-        });
-
-        db.run(`ALTER TABLE participantes ADD COLUMN indicado_por INTEGER`, (err) => {
-            if (err && !err.message.includes('duplicate column')) {
-                console.error('⚠️ Aviso ao adicionar coluna indicado_por:', err.message);
-            } else if (!err) {
-                console.log('✅ Coluna indicado_por adicionada');
-            }
-        });
-
-        
         // Tabela de prêmios
         db.run(`
             CREATE TABLE IF NOT EXISTS premios (
@@ -260,7 +356,7 @@ function criarTabelas() {
                 premio_id INTEGER,
                 premio_nome TEXT NOT NULL,
                 premio_ganho INTEGER DEFAULT 1,
-                data_sorteio DATETIME,
+                data_sorteio DATETIME DEFAULT CURRENT_TIMESTAMP,
                 tipo_sorteio TEXT DEFAULT 'cadastro'
             )
         `, (err) => {
@@ -430,11 +526,15 @@ app.post('/api/signup', (req, res) => {
     });
 });
 
+// ============================================
+// ROTA: SALVAR INDICAÇÕES
+// ============================================
 app.post('/api/indicacoes', async (req, res) => {
     console.log('📥 Recebendo indicações:', req.body);
     
     const { indicante_id, indicante_nome, indicante_email, indicante_whatsapp, indicacoes } = req.body;
     
+    // Validação básica
     if (!indicante_id || !indicacoes || !Array.isArray(indicacoes) || indicacoes.length === 0) {
         console.error('❌ Dados inválidos:', req.body);
         return res.status(400).json({ 
@@ -445,18 +545,18 @@ app.post('/api/indicacoes', async (req, res) => {
     
     let indicacoesSalvas = 0;
     let erros = [];
-    let indicadosDetalhes = []; // 🆕 Para enviar ao Zapier
     
     try {
+        // Processar cada indicação sequencialmente
         for (let i = 0; i < indicacoes.length; i++) {
             const { nome, whatsapp, email } = indicacoes[i];
             
             console.log(`  📝 Processando indicação ${i + 1}/${indicacoes.length}:`, { nome, whatsapp, email });
             
-            // Verificar duplicados
+            // Verificar se já existe (promise)
             const existente = await new Promise((resolve, reject) => {
                 db.get(
-                    'SELECT id, nome, email, whatsapp FROM participantes WHERE email = ? OR whatsapp = ?',
+                    'SELECT id FROM participantes WHERE email = ? OR whatsapp = ?',
                     [email, whatsapp],
                     (err, row) => {
                         if (err) reject(err);
@@ -466,17 +566,12 @@ app.post('/api/indicacoes', async (req, res) => {
             });
             
             if (existente) {
-                if (existente.email === email) {
-                    console.log(`  ⚠️ Email ${email} já cadastrado para ${existente.nome}`);
-                    erros.push(`❌ ${nome}: Email já cadastrado`);
-                } else if (existente.whatsapp === whatsapp) {
-                    console.log(`  ⚠️ WhatsApp ${whatsapp} já cadastrado para ${existente.nome}`);
-                    erros.push(`❌ ${nome}: WhatsApp já cadastrado`);
-                }
+                console.log(`  ⚠️ ${nome} já está cadastrado`);
+                erros.push(`${nome} já está cadastrado`);
                 continue;
             }
             
-            // Inserir indicação
+            // Inserir novo participante (promise)
             await new Promise((resolve, reject) => {
                 db.run(
                     `INSERT INTO participantes (nome, whatsapp, email, chances, sorteado, indicado_por, data_cadastro) 
@@ -488,71 +583,33 @@ app.post('/api/indicacoes', async (req, res) => {
                             erros.push(`Erro ao salvar ${nome}`);
                             reject(err);
                         } else {
-                            console.log(`  ✅ ${nome} cadastrado com ID: ${this.lastID}, indicado por: ${indicante_id}`);
+                            console.log(`  ✅ ${nome} cadastrado com sucesso! ID: ${this.lastID}`);
                             indicacoesSalvas++;
-                            
-                            // 🆕 Guardar detalhes para o Zapier
-                            indicadosDetalhes.push({
-                                nome: nome,
-                                whatsapp: whatsapp,
-                                email: email
-                            });
-                            
                             resolve();
                         }
                     }
                 );
             });
-        }
-        
-        // Adicionar chances ao indicante
-        if (indicacoesSalvas > 0) {
+            
+            // Adicionar +1 chance para quem indicou
             await new Promise((resolve, reject) => {
                 db.run(
-                    'UPDATE participantes SET chances = chances + ? WHERE id = ?',
-                    [indicacoesSalvas, indicante_id],
+                    'UPDATE participantes SET chances = chances + 1 WHERE id = ?',
+                    [indicante_id],
                     (err) => {
                         if (err) {
-                            console.error('  ❌ Erro ao adicionar chances:', err);
+                            console.error('  ❌ Erro ao adicionar chance:', err);
                             reject(err);
                         } else {
-                            console.log(`  🎁 +${indicacoesSalvas} chance(s) adicionada(s) para ${indicante_nome}`);
+                            console.log(`  🎁 +1 chance adicionada para ${indicante_nome}`);
                             resolve();
                         }
                     }
                 );
             });
-            
-            // 🆕 ENVIAR PARA O ZAPIER
-            const dadosZapier = {
-                // Dados de quem indicou
-                indicante_nome: indicante_nome,
-                indicante_email: indicante_email,
-                indicante_whatsapp: indicante_whatsapp,
-                
-                // Quantas pessoas foram indicadas
-                total_indicacoes: indicacoesSalvas,
-                chances_ganhas: indicacoesSalvas,
-                
-                // Lista de indicados
-                indicados: indicadosDetalhes.map(ind => ind.nome).join(', '),
-                indicados_detalhes: indicadosDetalhes,
-                
-                // Links para compartilhar
-                link_roleta: `http://SEU_DOMINIO:3000/final.html?secao=roleta`,
-                link_raspadinha: `http://SEU_DOMINIO:3000/final.html?secao=raspadinha`,
-                link_geral: `http://SEU_DOMINIO:3000/final.html`,
-                
-                // Data
-                data_indicacao: new Date().toLocaleString('pt-BR')
-            };
-            
-            // Enviar para Zapier (não espera resposta)
-            enviarParaZapier(ZAPIER_WEBHOOK_INDICACAO, dadosZapier).catch(err => {
-                console.error('⚠️ Erro ao enviar para Zapier (não crítico):', err);
-            });
         }
         
+        // Resposta final
         if (indicacoesSalvas > 0) {
             console.log(`✅ Total de indicações salvas: ${indicacoesSalvas}`);
             res.json({
@@ -710,23 +767,22 @@ app.delete('/api/participantes/:id', (req, res) => {
 });
 
 // GET /api/historico-sorteios
+// GET /api/historico-sorteios - VERSÃO CORRIGIDA COM LOGS
 app.get('/api/historico-sorteios', (req, res) => {
     console.log('🔍 GET /api/historico-sorteios - Iniciando busca...');
     
     const { limit, premio_ganho } = req.query;
-    
-    // Query base - SEMPRE filtrar prêmios negativos
-    let query = `SELECT * FROM historico_sorteios 
-                 WHERE premio_nome NOT LIKE '%não foi dessa vez%' 
-                 AND premio_nome NOT LIKE '%NÃO FOI DESSA VEZ%'
-                 AND premio_nome NOT LIKE '%tente novamente%'
-                 AND premio_nome NOT LIKE '%Tente novamente%'`;
-    
+    let query = 'SELECT * FROM historico_sorteios';
+    const conditions = [];
     const values = [];
     
     if (premio_ganho === 'true') {
-        query += ' AND premio_ganho = 1';
+        conditions.push('premio_ganho = 1');
         console.log('  ↳ Filtrando apenas ganhadores');
+    }
+    
+    if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
     }
     
     query += ' ORDER BY data_sorteio DESC';
@@ -738,55 +794,37 @@ app.get('/api/historico-sorteios', (req, res) => {
     }
     
     console.log('  ↳ Query SQL:', query);
+    console.log('  ↳ Valores:', values);
     
     db.all(query, values, (err, rows) => {
         if (err) {
             console.error('❌ ERRO ao buscar histórico:', err);
-            return res.status(500).json({ error: 'Erro ao buscar histórico' });
+            return res.status(500).json({ error: 'Erro ao buscar histórico', details: err.message });
         }
         
+        // Garantir que rows nunca seja null/undefined
         const historico = rows || [];
         
+        // Processar cada registro para garantir tipo_sorteio
         const historicoProcessado = historico.map(row => ({
             ...row,
+            // Se tipo_sorteio for null/undefined, assume 'cadastro' ou 'roleta'
             tipo_sorteio: row.tipo_sorteio || 'cadastro'
         }));
         
         console.log(`✅ Histórico retornado: ${historicoProcessado.length} registros`);
         
+        // Log dos primeiros 3 registros para debug
         if (historicoProcessado.length > 0) {
             console.log('📋 Primeiros registros:');
             historicoProcessado.slice(0, 3).forEach((row, idx) => {
-                console.log(`  ${idx + 1}. ${row.nome} - ${row.premio_nome} - ${row.data_sorteio}`);
+                console.log(`  ${idx + 1}. ${row.nome} - ${row.premio_nome} - ${row.tipo_sorteio}`);
             });
         } else {
-            console.log('⚠️  Nenhum registro válido encontrado');
+            console.log('⚠️  Nenhum registro encontrado na tabela historico_sorteios');
         }
         
         res.json(historicoProcessado);
-    });
-});
-
-// Rota temporária para limpar registros inválidos
-app.get('/api/limpar-registros-invalidos', (req, res) => {
-    console.log('🧹 Limpando registros "Não foi dessa vez"...');
-    
-    db.run(`
-        DELETE FROM historico_sorteios 
-        WHERE premio_nome LIKE '%não foi dessa vez%' 
-        OR premio_nome LIKE '%NÃO FOI DESSA VEZ%'
-        OR premio_nome LIKE '%tente novamente%'
-    `, function(err) {
-        if (err) {
-            console.error('❌ Erro ao limpar:', err);
-            return res.status(500).json({ error: 'Erro ao limpar' });
-        }
-        
-        console.log(`✅ ${this.changes} registros removidos`);
-        res.json({ 
-            success: true, 
-            registros_removidos: this.changes 
-        });
     });
 });
 
@@ -943,81 +981,17 @@ app.get('/api/sorteios-agendados/:id', (req, res) => {
     });
 });
 
-// ============================================
-// ROTA: SALVAR/BUSCAR CONFIGURAÇÕES
-// ============================================
-
-// GET - Buscar configurações
-app.get('/api/configuracoes', (req, res) => {
-    db.all('SELECT * FROM configuracoes', (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar configurações:', err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(rows || []);
-    });
-});
-
-// POST - Salvar configurações
-app.post('/api/configuracoes', (req, res) => {
-    const configs = req.body;
-    console.log('💾 Salvando configurações:', configs);
-
-    try {
-        // Preparar queries
-        const queries = [];
-        
-        for (const [chave, valor] of Object.entries(configs)) {
-            queries.push(new Promise((resolve, reject) => {
-                db.run(
-                    `INSERT INTO configuracoes (chave, valor) 
-                     VALUES (?, ?)
-                     ON CONFLICT(chave) 
-                     DO UPDATE SET valor = ?`,
-                    [chave, valor, valor],
-                    (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    }
-                );
-            }));
-        }
-
-        // Executar todas as queries
-        Promise.all(queries)
-            .then(() => {
-                console.log('✅ Configurações salvas com sucesso');
-                res.json({ success: true });
-            })
-            .catch(err => {
-                console.error('❌ Erro ao salvar:', err);
-                res.status(500).json({ error: err.message });
-            });
-
-    } catch (error) {
-        console.error('❌ Erro:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ============================================
-// ROTA: VERIFICAR SE DEVE SORTEAR
-// ============================================
-
+// 4️⃣ ROTA: Verificar se deve sortear automaticamente
 app.get('/api/verificar-sorteio', (req, res) => {
-    console.log('🔍 Verificando condições para sorteio...');
+    console.log('🔍 Verificando condições para sorteio automático...');
     
     db.get(
         'SELECT valor FROM configuracoes WHERE chave = ?',
         ['sorteio_automatico_ativo'],
-        (err, sorteioAtivo) => {
-            if (err) {
-                return res.json({ deve_sortear: false, erro: err.message });
-            }
-            
-            if (!sorteioAtivo || sorteioAtivo.valor !== 'true') {
-                return res.json({ 
-                    deve_sortear: false, 
+        (err, configAtivo) => {
+            if (err || !configAtivo || configAtivo.valor !== 'true') {
+                return res.json({
+                    deve_sortear: false,
                     motivo: 'Sorteio automático desativado',
                     participantes_atuais: 0,
                     participantes_necessarios: 0
@@ -1027,30 +1001,44 @@ app.get('/api/verificar-sorteio', (req, res) => {
             db.get(
                 'SELECT valor FROM configuracoes WHERE chave = ?',
                 ['participantes_necessarios'],
-                (err, configParticipantes) => {
-                    if (err) {
-                        return res.json({ deve_sortear: false, erro: err.message });
-                    }
-                    
-                    const participantesNecessarios = parseInt(configParticipantes?.valor || 0);
+                (err, configQtd) => {
+                    const necessarios = parseInt(configQtd?.valor || 10);
                     
                     db.get(
                         'SELECT COUNT(*) as total FROM participantes WHERE sorteado = 0',
                         (err, result) => {
-                            if (err) {
-                                return res.json({ deve_sortear: false, erro: err.message });
-                            }
+                            const atuais = result?.total || 0;
                             
-                            const participantesAtuais = result.total;
-                            const deveSortear = participantesAtuais >= participantesNecessarios;
+                            const agora = new Date();
+                            const dataHoje = agora.toISOString().split('T')[0];
+                            const horaAtual = agora.toLocaleTimeString('pt-BR', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: false 
+                            });
                             
-                            console.log(`📊 ${participantesAtuais}/${participantesNecessarios} - Sortear? ${deveSortear ? 'SIM' : 'NÃO'}`);
-                            
-                            res.json({
-                                deve_sortear: deveSortear,
-                                participantes_atuais: participantesAtuais,
-                                participantes_necessarios: participantesNecessarios,
-                                sorteio_ativo: true
+                            db.get(`
+                                SELECT id FROM sorteios_agendados 
+                                WHERE data_sorteio = ? 
+                                AND hora_inicio_sorteio <= ? 
+                                AND hora_fim_sorteio >= ?
+                                AND status = 'pendente'
+                                LIMIT 1
+                            `, [dataHoje, horaAtual, horaAtual], (err, sorteio) => {
+                                
+                                const deveSortear = atuais >= necessarios && sorteio;
+                                
+                                res.json({
+                                    deve_sortear: deveSortear,
+                                    motivo: deveSortear 
+                                        ? 'Condições atendidas' 
+                                        : !sorteio 
+                                            ? 'Nenhum sorteio ativo no momento'
+                                            : `Faltam ${necessarios - atuais} participantes`,
+                                    participantes_atuais: atuais,
+                                    participantes_necessarios: necessarios,
+                                    sorteio_id: sorteio?.id || null
+                                });
                             });
                         }
                     );
@@ -1060,304 +1048,24 @@ app.get('/api/verificar-sorteio', (req, res) => {
     );
 });
 
-// ============================================
-// ROTA: SALVAR/BUSCAR CONFIGURAÇÕES
-// ============================================
-
-app.get('/api/configuracoes', (req, res) => {
-    db.all('SELECT * FROM configuracoes', (err, rows) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(rows || []);
-    });
-});
-
-app.post('/api/configuracoes', (req, res) => {
-    const configs = req.body;
-    console.log('💾 Salvando configurações:', configs);
-
-    const queries = [];
-    
-    for (const [chave, valor] of Object.entries(configs)) {
-        queries.push(new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO configuracoes (chave, valor) 
-                 VALUES (?, ?)
-                 ON CONFLICT(chave) 
-                 DO UPDATE SET valor = ?`,
-                [chave, valor, valor],
-                (err) => err ? reject(err) : resolve()
-            );
-        }));
-    }
-
-    Promise.all(queries)
-        .then(() => {
-            console.log('✅ Configurações salvas');
-            res.json({ success: true });
-        })
-        .catch(err => {
-            console.error('❌ Erro:', err);
-            res.status(500).json({ error: err.message });
-        });
-});
-
-// ============================================
-// ROTA: REGISTRAR SORTEIO E ENVIAR PARA ZAPIER
-// ============================================
-
-app.post('/api/registrar-sorteio', async (req, res) => {
+// POST /api/registrar-sorteio
+app.post('/api/registrar-sorteio', (req, res) => {
     const { participante, premio, tipo_sorteio } = req.body;
     
-    console.log('📝 [API] Registrando sorteio:', { 
-        participante: participante?.nome, 
-        premio: premio?.nome, 
-        tipo: tipo_sorteio 
-    });
-    
-    // ✅ VALIDAÇÃO: Dados obrigatórios
     if (!participante || !premio) {
-        console.error('❌ Dados incompletos:', req.body);
-        return res.status(400).json({ 
-            success: false,
-            error: 'Dados incompletos: participante ou prêmio faltando' 
-        });
-    }
-    
-    // 🚫 NÃO SALVAR se for "Não foi dessa vez"
-    const premioNome = premio.nome || '';
-    const naoGanhou = premioNome.toLowerCase().includes('não foi dessa vez') || 
-                      premioNome.toLowerCase().includes('tente novamente');
-    
-    if (naoGanhou) {
-        console.log('⚠️ Prêmio negativo - não será salvo');
-        return res.json({ 
-            success: true, 
-            message: 'Sorteio não registrado (tente novamente)',
-            registrado: false
-        });
+        return res.status(400).json({ error: 'Dados incompletos' });
     }
     
     const tipo = tipo_sorteio || 'cadastro';
     
-    try {
-        // 1️⃣ SALVAR NO BANCO DE DADOS
-        const sorteioId = await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO historico_sorteios 
-                (nome, email, whatsapp, premio_id, premio_nome, premio_ganho, tipo_sorteio) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    participante.nome, 
-                    participante.email, 
-                    participante.whatsapp || '', 
-                    premio.id || 0, 
-                    premio.nome, 
-                    1, 
-                    tipo
-                ],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Erro ao inserir no banco:', err);
-                        reject(err);
-                    } else {
-                        console.log(`✅ Sorteio salvo no banco! ID: ${this.lastID}`);
-                        resolve(this.lastID);
-                    }
-                }
-            );
-        });
-        
-        // 2️⃣ PREPARAR DADOS PARA O ZAPIER
-        const dadosZapier = {
-            // 👤 Dados do ganhador
-            nome: participante.nome,
-            email: participante.email,
-            whatsapp: participante.whatsapp || 'Não informado',
-            
-            // 🎁 Dados do prêmio
-            premio: premio.nome,
-            premio_descricao: premio.descricao || '',
-            premio_icone: premio.icone || '🎁',
-            
-            // 📊 Dados do sorteio
-            tipo_sorteio: tipo === 'roleta' ? 'Roleta da Sorte' : 
-                         tipo === 'raspadinha' ? 'Raspadinha' : 
-                         'Cadastro',
-            data_sorteio: new Date().toLocaleString('pt-BR', {
-                timeZone: 'America/Sao_Paulo',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
-            
-            // 🔗 Links úteis
-            link_sistema: `http://localhost:${PORT}/final.html`,
-            
-            // 🆔 ID para rastreamento
-            sorteio_id: sorteioId,
-            timestamp: Date.now()
-        };
-        
-        console.log('📤 Enviando para Zapier:', dadosZapier);
-        
-        // 3️⃣ ENVIAR PARA O ZAPIER (SEM ESPERAR RESPOSTA)
-        enviarParaZapier(ZAPIER_WEBHOOK_PREMIO, dadosZapier)
-            .then(enviado => {
-                if (enviado) {
-                    console.log('✅ Zapier notificado com sucesso!');
-                } else {
-                    console.log('⚠️ Falha ao notificar Zapier (mas sorteio foi salvo)');
-                }
-            })
-            .catch(err => {
-                console.error('❌ Erro ao enviar para Zapier:', err);
-            });
-        
-        // 4️⃣ RESPONDER IMEDIATAMENTE (NÃO ESPERA O ZAPIER)
-        res.json({ 
-            success: true, 
-            sorteio_id: sorteioId, 
-            tipo: tipo,
-            zapier_enviado: true,
-            registrado: true,
-            message: 'Sorteio registrado com sucesso!'
-        });
-        
-    } catch (error) {
-        console.error('❌ Erro ao registrar sorteio:', error);
-        res.status(500).json({ 
-            success: false,
-            error: 'Erro ao registrar sorteio: ' + error.message 
-        });
-    }
-});
-
-// 🧪 ROTA DE TESTE DO ZAPIER
-app.get('/api/testar-zapier', async (req, res) => {
-    console.log('🧪 Testando envio para Zapier...');
-    
-    const dadosTeste = {
-        nome: 'João Teste',
-        email: 'joao@teste.com',
-        whatsapp: '11999999999',
-        premio: 'Teste de Prêmio 🎁',
-        premio_descricao: 'Apenas um teste do sistema',
-        premio_icone: '🎁',
-        tipo_sorteio: 'Teste Manual',
-        data_sorteio: new Date().toLocaleString('pt-BR'),
-        sorteio_id: 999,
-        timestamp: Date.now()
-    };
-    
-    try {
-        console.log('📤 Enviando dados de teste:', dadosTeste);
-        
-        const resultado = await enviarParaZapier(ZAPIER_WEBHOOK_PREMIO, dadosTeste);
-        
-        if (resultado) {
-            console.log('✅ Teste bem-sucedido!');
-            res.json({ 
-                success: true, 
-                mensagem: '✅ Zapier recebeu os dados!',
-                dados_enviados: dadosTeste,
-                webhook_url: ZAPIER_WEBHOOK_PREMIO
-            });
-        } else {
-            console.log('❌ Teste falhou - Zapier não respondeu OK');
-            res.json({ 
-                success: false, 
-                erro: 'Zapier não respondeu com status 200',
-                dados_enviados: dadosTeste,
-                webhook_url: ZAPIER_WEBHOOK_PREMIO
-            });
+    db.run(
+        'INSERT INTO historico_sorteios (nome, email, whatsapp, premio_id, premio_nome, premio_ganho, tipo_sorteio) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [participante.nome, participante.email, participante.whatsapp || '', premio.id || 0, premio.nome, 1, tipo],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Erro ao registrar sorteio' });
+            res.json({ success: true, sorteio_id: this.lastID, tipo });
         }
-    } catch (error) {
-        console.error('❌ Erro no teste:', error);
-        res.status(500).json({ 
-            success: false, 
-            erro: error.message,
-            dados_enviados: dadosTeste 
-        });
-    }
-});
-
-
-
-// Rota para registrar avaliação do Google
-app.post('/api/registrar-avaliacao', async (req, res) => {
-    const { participante_id, participante_nome, participante_email } = req.body;
-    
-    if (!participante_id) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'ID do participante não fornecido' 
-        });
-    }
-    
-    console.log('⭐ Registrando avaliação do Google para:', participante_nome);
-    
-    try {
-        // Verificar se já avaliou
-        const jaAvaliou = await new Promise((resolve, reject) => {
-            db.get(
-                'SELECT id FROM avaliacoes_google WHERE participante_id = ?',
-                [participante_id],
-                (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                }
-            );
-        });
-        
-        if (jaAvaliou) {
-            console.log('⚠️ Participante já avaliou anteriormente');
-        }
-        
-        // Registrar avaliação
-        await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO avaliacoes_google (participante_id, participante_nome, participante_email, data_avaliacao)
-                 VALUES (?, ?, ?, datetime('now'))`,
-                [participante_id, participante_nome, participante_email],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve();
-                }
-            );
-        });
-        
-        // Adicionar +2 chances
-        await new Promise((resolve, reject) => {
-            db.run(
-                'UPDATE participantes SET chances = chances + 2 WHERE id = ?',
-                [participante_id],
-                (err) => {
-                    if (err) reject(err);
-                    else {
-                        console.log(`✅ +2 chances adicionadas para ${participante_nome}`);
-                        resolve();
-                    }
-                }
-            );
-        });
-        
-        res.json({
-            success: true,
-            message: '+2 chances adicionadas com sucesso!',
-            chances_ganhas: 2
-        });
-        
-    } catch (error) {
-        console.error('❌ Erro ao registrar avaliação:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Erro ao registrar avaliação: ' + error.message
-        });
-    }
+    );
 });
 
 // ============================================
@@ -1474,20 +1182,6 @@ app.get('/api/dashboard', async (req, res) => {
                 `, (err, rows) => {
                     if (err) reject(err);
                     else resolve({ ganhadores_raspadinha: rows || [] });
-                });
-            }),
-
-            // 🆕 GANHADORES DA ROLETA - ADICIONE AQUI
-            new Promise((resolve, reject) => {
-                db.all(`
-                    SELECT nome, premio_nome, data_sorteio
-                    FROM historico_sorteios 
-                    WHERE tipo_sorteio = 'roleta'
-                    ORDER BY data_sorteio DESC 
-                    LIMIT 10
-                `, (err, rows) => {
-                    if (err) reject(err);
-                    else resolve({ ganhadores_roleta: rows || [] });
                 });
             }),
             
@@ -1794,374 +1488,6 @@ app.get('/api/teste-historico', (req, res) => {
     .catch(err => {
         console.error('❌ Erro no teste:', err);
         res.status(500).json({ error: err.message });
-    });
-});
-
-// ============================================
-// SISTEMA DE COMANDOS PARA SORTEIO AUTOMÁTICO
-// ============================================
-
-let comandoSorteioAtual = null;
-
-// Rota: Enviar comando de sorteio
-app.post('/api/comando-sorteio', (req, res) => {
-    const { acao, timestamp } = req.body;
-    
-    comandoSorteioAtual = {
-        acao: acao,
-        timestamp: timestamp || Date.now(),
-        executado: false
-    };
-    
-    console.log('🎰 Novo comando de sorteio recebido:', comandoSorteioAtual);
-    
-    res.json({ 
-        success: true, 
-        mensagem: 'Comando registrado!',
-        comando: comandoSorteioAtual 
-    });
-});
-
-// Rota: Verificar se tem comando pendente
-app.get('/api/comando-sorteio', (req, res) => {
-    if (!comandoSorteioAtual) {
-        return res.json({ 
-            success: true, 
-            comando: null 
-        });
-    }
-    
-    // Verificar se o comando é recente (menos de 30 segundos)
-    const idade = Date.now() - comandoSorteioAtual.timestamp;
-    
-    if (idade > 30000 || comandoSorteioAtual.executado) {
-        comandoSorteioAtual = null;
-        return res.json({ 
-            success: true, 
-            comando: null 
-        });
-    }
-    
-    res.json({ 
-        success: true, 
-        comando: comandoSorteioAtual 
-    });
-});
-
-// Rota: Marcar comando como executado
-app.post('/api/comando-sorteio/executado', (req, res) => {
-    if (comandoSorteioAtual) {
-        comandoSorteioAtual.executado = true;
-        console.log('✅ Comando marcado como executado');
-    }
-    
-    res.json({ success: true });
-});
-
-// ============================================
-// SISTEMA DE EVENTOS EM TEMPO REAL (SSE)
-// Funciona 100% em celulares!
-// ============================================
-
-let clientesConectados = [];
-
-// Rota SSE: Escutar comandos de sorteio
-app.get('/api/stream-comandos', (req, res) => {
-    console.log('📡 Novo cliente conectado ao stream');
-    
-    // Configurar headers para SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    
-    // Adicionar cliente à lista
-    const clienteId = Date.now();
-    const cliente = { id: clienteId, res };
-    clientesConectados.push(cliente);
-    
-    console.log(`✅ Cliente ${clienteId} adicionado. Total: ${clientesConectados.length}`);
-    
-    // Enviar heartbeat a cada 15 segundos para manter conexão viva
-    const heartbeat = setInterval(() => {
-        res.write(`:heartbeat ${Date.now()}\n\n`);
-    }, 15000);
-    
-    // Remover cliente quando desconectar
-    req.on('close', () => {
-        clearInterval(heartbeat);
-        clientesConectados = clientesConectados.filter(c => c.id !== clienteId);
-        console.log(`❌ Cliente ${clienteId} desconectado. Restam: ${clientesConectados.length}`);
-    });
-    
-    // Enviar mensagem inicial
-    res.write(`data: ${JSON.stringify({ tipo: 'conectado', timestamp: Date.now() })}\n\n`);
-});
-
-// Modificar a rota POST /api/comando-sorteio para notificar clientes
-app.post('/api/comando-sorteio', (req, res) => {
-    const { acao, timestamp } = req.body;
-    
-    comandoSorteioAtual = {
-        acao: acao,
-        timestamp: timestamp || Date.now(),
-        executado: false
-    };
-    
-    console.log('🎰 Novo comando de sorteio recebido:', comandoSorteioAtual);
-    
-    // 🆕 NOTIFICAR TODOS OS CLIENTES CONECTADOS VIA SSE
-    console.log(`📢 Notificando ${clientesConectados.length} clientes...`);
-    
-    clientesConectados.forEach((cliente, index) => {
-        try {
-            const mensagem = JSON.stringify({
-                tipo: 'INICIAR_SORTEIO',
-                acao: acao,
-                timestamp: timestamp
-            });
-            
-            cliente.res.write(`data: ${mensagem}\n\n`);
-            console.log(`  ✅ Cliente ${index + 1} notificado`);
-        } catch (error) {
-            console.error(`  ❌ Erro ao notificar cliente ${index + 1}:`, error.message);
-        }
-    });
-    
-    res.json({ 
-        success: true, 
-        mensagem: 'Comando registrado e clientes notificados!',
-        clientes_notificados: clientesConectados.length,
-        comando: comandoSorteioAtual 
-    });
-});
-
-console.log('✅ Sistema SSE configurado (funciona em celulares!)');
-
-// ============================================
-// ADICIONE ESTAS LINHAS NO server.js
-// Logo após as outras rotas da API
-// ============================================
-
-// Variável global para armazenar comando pendente
-let comandoPendente = null;
-
-// Rota para o painel enviar comando
-app.post('/api/enviar-comando', (req, res) => {
-    const comando = req.body;
-    console.log('📨 [API] Comando recebido:', comando);
-    
-    // Armazenar comando pendente
-    comandoPendente = {
-        ...comando,
-        timestamp: Date.now()
-    };
-    
-    console.log('💾 [API] Comando armazenado para polling');
-    
-    // Também notificar via SSE (se houver clientes conectados)
-    if (clientesConectados && clientesConectados.length > 0) {
-        clientesConectados.forEach(client => {
-            try {
-                client.res.write(`data: ${JSON.stringify(comando)}\n\n`);
-            } catch (error) {
-                console.error('❌ Erro ao enviar para cliente SSE:', error.message);
-            }
-        });
-        console.log(`📡 [SSE] Comando enviado para ${clientesConectados.length} cliente(s)`);
-    }
-    
-    res.json({ 
-        success: true, 
-        clientesSSE: clientesConectados ? clientesConectados.length : 0,
-        comandoArmazenado: true
-    });
-});
-
-// Nova rota para polling (verificar comando pendente)
-app.get('/api/verificar-comando', (req, res) => {
-    console.log('🔍 [POLLING] Verificação de comando recebida');
-    
-    if (comandoPendente) {
-        console.log('✅ [POLLING] Comando pendente encontrado:', comandoPendente);
-        
-        // Enviar comando
-        const comando = comandoPendente;
-        
-        // Limpar comando após 5 segundos (evita reprocessamento)
-        setTimeout(() => {
-            if (comandoPendente && comandoPendente.timestamp === comando.timestamp) {
-                comandoPendente = null;
-                console.log('🗑️ [POLLING] Comando limpo após timeout');
-            }
-        }, 5000);
-        
-        res.json({
-            success: true,
-            comando: comando
-        });
-    } else {
-        console.log('⏳ [POLLING] Nenhum comando pendente');
-        res.json({
-            success: true,
-            comando: null
-        });
-    }
-});
-
-// Rota para limpar comando manualmente (opcional)
-app.post('/api/limpar-comando', (req, res) => {
-    comandoPendente = null;
-    console.log('🗑️ [API] Comando pendente limpo manualmente');
-    res.json({ success: true });
-});
-
-// Rota para ver indicações de um participante
-app.get('/api/indicacoes/:participante_id', (req, res) => {
-    const { participante_id } = req.params;
-    
-    db.all(`
-        SELECT 
-            p.id,
-            p.nome,
-            p.email,
-            p.whatsapp,
-            p.data_cadastro,
-            indicado.nome as indicado_por_nome,
-            indicado.email as indicado_por_email
-        FROM participantes p
-        LEFT JOIN participantes indicado ON p.indicado_por = indicado.id
-        WHERE p.indicado_por = ? OR p.id = ?
-        ORDER BY p.data_cadastro DESC
-    `, [participante_id, participante_id], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar indicações:', err);
-            return res.status(500).json({ error: 'Erro ao buscar indicações' });
-        }
-        
-        res.json({
-            success: true,
-            indicacoes: rows || []
-        });
-    });
-});
-
-// Rota para ver indicados de um participante
-app.get('/api/meus-indicados/:participante_id', (req, res) => {
-    const { participante_id } = req.params;
-    
-    db.all(`
-        SELECT 
-            id,
-            nome,
-            email,
-            whatsapp,
-            data_cadastro,
-            chances
-        FROM participantes
-        WHERE indicado_por = ?
-        ORDER BY data_cadastro DESC
-    `, [participante_id], (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar indicados:', err);
-            return res.status(500).json({ error: 'Erro ao buscar indicados' });
-        }
-        
-        res.json({
-            success: true,
-            total_indicados: rows ? rows.length : 0,
-            indicados: rows || []
-        });
-    });
-});
-
-// ============================================
-// ROTAS PARA VISUALIZAR INDICAÇÕES
-// ============================================
-
-// Ver TODOS os participantes com seus indicadores
-app.get('/api/participantes-com-indicacoes', (req, res) => {
-    console.log('📊 Buscando participantes com indicações...');
-    
-    db.all(`
-        SELECT 
-            p.id,
-            p.nome,
-            p.email,
-            p.whatsapp,
-            p.chances,
-            p.data_cadastro,
-            p.indicado_por,
-            indicador.nome as indicador_nome,
-            indicador.email as indicador_email,
-            indicador.whatsapp as indicador_whatsapp
-        FROM participantes p
-        LEFT JOIN participantes indicador ON p.indicado_por = indicador.id
-        ORDER BY p.data_cadastro DESC
-    `, (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar participantes:', err);
-            return res.status(500).json({ error: 'Erro ao buscar participantes' });
-        }
-        
-        console.log(`✅ Encontrados ${rows.length} participantes`);
-        
-        res.json({
-            success: true,
-            total: rows.length,
-            participantes: rows
-        });
-    });
-});
-
-// Ver apenas os INDICADOS (quem foi indicado por alguém)
-app.get('/api/indicados', (req, res) => {
-    console.log('📊 Buscando apenas indicados...');
-    
-    db.all(`
-        SELECT 
-            p.id,
-            p.nome as indicado_nome,
-            p.email as indicado_email,
-            p.whatsapp as indicado_whatsapp,
-            p.data_cadastro,
-            indicador.id as indicador_id,
-            indicador.nome as indicador_nome,
-            indicador.email as indicador_email,
-            indicador.whatsapp as indicador_whatsapp
-        FROM participantes p
-        INNER JOIN participantes indicador ON p.indicado_por = indicador.id
-        ORDER BY p.data_cadastro DESC
-    `, (err, rows) => {
-        if (err) {
-            console.error('❌ Erro ao buscar indicados:', err);
-            return res.status(500).json({ error: 'Erro ao buscar indicados' });
-        }
-        
-        console.log(`✅ Encontrados ${rows.length} indicados`);
-        
-        res.json({
-            success: true,
-            total: rows.length,
-            indicados: rows
-        });
-    });
-});
-
-// Rota para corrigir horários existentes
-app.get('/api/corrigir-horarios', (req, res) => {
-    db.run(`
-        UPDATE historico_sorteios 
-        SET data_sorteio = datetime(data_sorteio, '-3 hours')
-        WHERE data_sorteio > datetime('now', '-1 day')
-    `, function(err) {
-        if (err) {
-            return res.json({ error: err.message });
-        }
-        res.json({ 
-            success: true, 
-            registros_atualizados: this.changes 
-        });
     });
 });
 
