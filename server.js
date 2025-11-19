@@ -91,20 +91,6 @@ function protegerAdmin(req, res, next) {
         sessionID: req.sessionID || 'sem sessão'
     });
 
-    // 🆕 Lista de páginas PÚBLICAS (não precisam de login)
-    const paginasPublicas = [
-        '/',
-        '/final.html',
-        '/login.html',
-        '/testeroleta.html',
-        '/login2.html'
-    ];
-
-    // Se for página pública, libera sem verificar login
-    if (paginasPublicas.includes(path) || path.startsWith('/api/')) {
-        return next();
-    }
-
     // Lista de páginas que PRECISAM de login
     const paginasProtegidas = [
         '/dashboard.html',
@@ -115,9 +101,11 @@ function protegerAdmin(req, res, next) {
         '/raspadinha.html'
     ];
 
+    // Se for página protegida e NÃO estiver logado
     if (paginasProtegidas.includes(path)) {
         if (!req.session || !req.session.adminLogado) {
             console.log('❌ Acesso negado - redirecionando para login');
+            // 🆕 ADICIONAR A PÁGINA ORIGINAL NO REDIRECT
             return res.redirect(`/login.html?redirect=${encodeURIComponent(path)}`);
         }
         
@@ -156,20 +144,16 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// 🔹 Servir arquivos estáticos
+// Aplicar middleware ANTES de servir arquivos estáticos
+app.use(protegerAdmin);
+
+// Logo após a linha do express.static, adicione:
 app.use(express.static(__dirname));
 
-// 🔹 Rota raiz - redirecionar para final.html
+// Rota principal - redirecionar para final.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'final.html'));
 });
-
-app.use('/dashboard.html', protegerAdmin);
-app.use('/paineladm.html', protegerAdmin);
-app.use('/historico.html', protegerAdmin);
-app.use('/indicacoes.html', protegerAdmin);
-app.use('/notificacoes.html', protegerAdmin);
-app.use('/raspadinha.html', protegerAdmin);
 
 // 🟢 DAQUI PRA BAIXO, deixa TODO o seu código de banco, rotas /api etc.
 
@@ -185,7 +169,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
         criarTabelas();
     }
 });
-
 
 // Criar tabelas
 function criarTabelas() {
@@ -2181,256 +2164,6 @@ app.get('/api/corrigir-horarios', (req, res) => {
         });
     });
 });
-
-// Tabela para controlar sorteios sincronizados
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS sorteios_sincronizados (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            seed TEXT NOT NULL,
-            indice_vencedor INTEGER NOT NULL,
-            total_participantes INTEGER NOT NULL,
-            premio_id INTEGER,
-            premio_nome TEXT,
-            participante_id INTEGER,
-            participante_nome TEXT,
-            participante_email TEXT,
-            data_criacao DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `, (err) => {
-        if (err) console.error('Erro ao criar tabela sorteios_sincronizados:', err);
-        else console.log('✅ Tabela sorteios_sincronizados OK');
-    });
-});
-
-// ============================================
-// ROTA: GERAR SORTEIO SINCRONIZADO
-// ============================================
-
-app.post('/api/gerar-sorteio-sincronizado', async (req, res) => {
-    const { total_participantes, premio_id, premio_nome } = req.body;
-    
-    console.log('🎰 [SYNC] Gerando sorteio sincronizado...', {
-        total_participantes,
-        premio_id,
-        premio_nome
-    });
-    
-    if (!total_participantes || total_participantes <= 0) {
-        return res.status(400).json({
-            success: false,
-            message: 'Total de participantes inválido'
-        });
-    }
-    
-    try {
-        // 1️⃣ GERAR SEED ÚNICO (timestamp + random)
-        const seed = Date.now().toString() + Math.floor(Math.random() * 10000);
-        
-        // 2️⃣ CALCULAR ÍNDICE DO VENCEDOR (mesmo algoritmo do client)
-        const indice_vencedor = parseInt(seed) % total_participantes;
-        
-        console.log('🎯 [SYNC] Seed gerado:', seed);
-        console.log('🎯 [SYNC] Índice do vencedor:', indice_vencedor);
-        
-        // 3️⃣ BUSCAR PARTICIPANTES ATIVOS
-        const participantes = await new Promise((resolve, reject) => {
-            db.all(
-                'SELECT * FROM participantes WHERE sorteado = 0 ORDER BY nome',
-                (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows || []);
-                }
-            );
-        });
-        
-        if (participantes.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Nenhum participante disponível'
-            });
-        }
-        
-        if (indice_vencedor >= participantes.length) {
-            return res.status(400).json({
-                success: false,
-                message: 'Índice do vencedor fora dos limites'
-            });
-        }
-        
-        const vencedor = participantes[indice_vencedor];
-        
-        console.log('👤 [SYNC] Vencedor selecionado:', vencedor.nome);
-        
-        // 4️⃣ SALVAR NO BANCO
-        const sorteio_id = await new Promise((resolve, reject) => {
-            db.run(
-                `INSERT INTO sorteios_sincronizados 
-                (seed, indice_vencedor, total_participantes, premio_id, premio_nome, 
-                 participante_id, participante_nome, participante_email)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    seed,
-                    indice_vencedor,
-                    total_participantes,
-                    premio_id || 0,
-                    premio_nome || 'Prêmio',
-                    vencedor.id,
-                    vencedor.nome,
-                    vencedor.email
-                ],
-                function(err) {
-                    if (err) reject(err);
-                    else resolve(this.lastID);
-                }
-            );
-        });
-        
-        console.log('✅ [SYNC] Sorteio sincronizado salvo! ID:', sorteio_id);
-        
-        // 5️⃣ RETORNAR RESULTADO
-        res.json({
-            success: true,
-            sorteio: {
-                id: sorteio_id,
-                seed: seed,
-                indice_vencedor: indice_vencedor,
-                total_participantes: total_participantes,
-                premio_id: premio_id,
-                premio_nome: premio_nome,
-                vencedor: {
-                    id: vencedor.id,
-                    nome: vencedor.nome,
-                    email: vencedor.email,
-                    whatsapp: vencedor.whatsapp
-                }
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ [SYNC] Erro ao gerar sorteio:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Erro ao gerar sorteio: ' + error.message
-        });
-    }
-});
-
-// ============================================
-// ROTA: BUSCAR SORTEIO SINCRONIZADO POR SEED
-// ============================================
-
-app.get('/api/sorteio-sincronizado/:seed', (req, res) => {
-    const { seed } = req.params;
-    
-    db.get(
-        'SELECT * FROM sorteios_sincronizados WHERE seed = ? ORDER BY data_criacao DESC LIMIT 1',
-        [seed],
-        (err, row) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
-            
-            if (!row) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Sorteio não encontrado'
-                });
-            }
-            
-            res.json({
-                success: true,
-                sorteio: row
-            });
-        }
-    );
-});
-
-app.post('/api/enviar-comando', async (req, res) => {
-    const comando = req.body;
-    console.log('📨 [API] Comando recebido:', comando);
-    
-    // Se for comando de sorteio, gerar sorteio sincronizado
-    if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
-        console.log('🎰 [SYNC] Gerando sorteio sincronizado para comando...');
-        
-        try {
-            // Buscar participantes ativos
-            const participantes = await new Promise((resolve, reject) => {
-                db.all(
-                    'SELECT * FROM participantes WHERE sorteado = 0 ORDER BY nome',
-                    (err, rows) => {
-                        if (err) reject(err);
-                        else resolve(rows || []);
-                    }
-                );
-            });
-            
-            if (participantes.length === 0) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Nenhum participante disponível'
-                });
-            }
-            
-            // Gerar seed único
-            const seed = Date.now().toString() + Math.floor(Math.random() * 10000);
-            const indice_vencedor = parseInt(seed) % participantes.length;
-            
-            console.log('🎯 [SYNC] Seed:', seed);
-            console.log('🎯 [SYNC] Índice:', indice_vencedor);
-            
-            // Armazenar comando COM os dados sincronizados
-            comandoPendente = {
-                ...comando,
-                seed: seed,
-                indice_vencedor: indice_vencedor,
-                total_participantes: participantes.length,
-                timestamp: Date.now()
-            };
-            
-            console.log('💾 [SYNC] Comando sincronizado armazenado');
-            
-        } catch (error) {
-            console.error('❌ [SYNC] Erro ao gerar seed:', error);
-            // Continua com comando normal se falhar
-            comandoPendente = {
-                ...comando,
-                timestamp: Date.now()
-            };
-        }
-    } else {
-        // Comando normal (sem sincronização)
-        comandoPendente = {
-            ...comando,
-            timestamp: Date.now()
-        };
-    }
-    
-    // Notificar via SSE (se houver clientes conectados)
-    if (clientesConectados && clientesConectados.length > 0) {
-        clientesConectados.forEach(client => {
-            try {
-                client.res.write(`data: ${JSON.stringify(comandoPendente)}\n\n`);
-            } catch (error) {
-                console.error('❌ Erro ao enviar para cliente SSE:', error.message);
-            }
-        });
-        console.log(`📡 [SSE] Comando enviado para ${clientesConectados.length} cliente(s)`);
-    }
-    
-    res.json({ 
-        success: true, 
-        clientesSSE: clientesConectados ? clientesConectados.length : 0,
-        comandoArmazenado: true,
-        sincronizado: !!comandoPendente.seed
-    });
-});
-
-console.log('✅ Sistema de sorteio sincronizado configurado!');
 
 // ============================================
 // INICIAR SERVIDOR
