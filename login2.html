@@ -19,15 +19,21 @@
 
         body {
             font-family: 'Arial Black', Arial, sans-serif;
-            background: linear-gradient(135deg, #298ff0b6 0%, #6cecf0a1 100%);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+
+            background: url("natal%20fundo.png") no-repeat center top;
+            background-size: cover;
+            background-attachment: fixed;
+
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 0;
-            margin: 0;
         }
+
+
 
         .container {
             text-align: center;
@@ -179,15 +185,28 @@
         }
 
         .mensagem-erro {
-            color: #DC143C;
-            font-size: 1em;
-            font-weight: 700;
-            margin-top: 15px;
-            padding: 15px;
+            font-size: 0.7em;         /* 🔥 DIMINUI A FONTE */
+            line-height: 1.1;         /* 🔥 FONTE MAIS JUNTINHA */
+
+            padding: 8px 10px;        /* 🔥 DIMINUI A ALTURA TOTAL */
+            margin-top: 8px;
+            margin-bottom: 8px;
+
             background: rgba(255,255,255,0.9);
+            color: #DC143C;
+            font-weight: 700;
+
             border-radius: 10px;
             border: 2px solid #DC143C;
+
+            margin-left: auto;
+            margin-right: auto;
+
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            text-align: center;
         }
+
+
 
         @media (max-width: 768px) {
             .premio-revelado {
@@ -227,7 +246,6 @@
         }
 
         .mensagem-erro::before {
-            content: "⏳";
             display: block;
             font-size: 2em;
             margin-bottom: 10px;
