@@ -101,6 +101,7 @@
             text-align: center;
             margin: 0 auto;    /* ✅ CENTRALIZA */
             padding: auto;
+            margin-top: -40px;
         }
 
         .card-premios {
@@ -766,15 +767,14 @@
         .sla{
             display: block;
             width: 100%;
-
-            /* 🔥 isso aqui controla a altura! */
-            height: 155px;  /* coloque o valor que quiser: 50px, 70px, 100px... */
-
-            object-fit: cover;  /* corta verticalmente sem distorcer */
-            object-position: center top; /* mostra a parte mais "bonita" da imagem */
-            margin: 0;
-            margin-top: -110px;
+            height: 185px;   /* seu valor original */
+            object-fit: cover;
+            object-position: center top;
+            transform: scale(0.8);     /* ⬅⬅⬅ DIMINUI 20% */
+            transform-origin: top;     /* escala a partir do topo */
+            margin-top: -100px;
         }
+
 
     </style>
 </head>
