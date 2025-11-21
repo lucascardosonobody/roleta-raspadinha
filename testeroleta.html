@@ -45,13 +45,10 @@
 
         .topo-imagem {
             width: 100%;
+            height: 160px;   /* Ajuste até ficar perfeito */
+            object-fit: cover;
+            object-position: center top; /* você escolhe onde cortar */
             display: block;
-            margin: 0 auto;              /* ✅ Centralizar */
-            vertical-align: top;
-            height: 180px;               /* ✅ Ajuste conforme necessário */
-            object-fit: contain;         /* ✅ IMPORTANTE: Mostra completo */
-            object-position: center;     /* ✅ Centraliza */
-            background: transparent;     /* ✅ Fundo transparente */
         }
         
         @keyframes pulsar {
@@ -558,10 +555,7 @@
 
         /* Mobile */
         @media (max-width: 768px) {
-            .topo-imagem {
-                max-height: 140px;
-                object-fit: cover;
-            }
+           
 
             .roleta-e-card-wrapper {
                 grid-template-columns: 1fr;
@@ -656,9 +650,7 @@
  
         /* Mobile Pequeno */
         @media (max-width: 480px) {
-            .topo-imagem {
-                height: 100%;
-            }
+            
 
             .content-wrapper {
                 gap: 3px;  /* ✅ REDUZIDO de 8px para 5px */
