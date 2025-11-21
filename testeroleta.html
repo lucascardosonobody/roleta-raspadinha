@@ -100,6 +100,7 @@
             max-width: 600px;  /* ✅ LIMITA A LARGURA */
             text-align: center;
             margin: 0 auto;    /* ✅ CENTRALIZA */
+            padding: auto;
         }
 
         .card-premios {
@@ -762,6 +763,19 @@
 
         }
 
+        .sla{
+            display: block;
+            width: 100%;
+
+            /* 🔥 isso aqui controla a altura! */
+            height: 197px;  /* coloque o valor que quiser: 50px, 70px, 100px... */
+
+            object-fit: cover;  /* corta verticalmente sem distorcer */
+            object-position: center top; /* mostra a parte mais "bonita" da imagem */
+            margin: 0;
+            margin-top: -100px;
+        }
+
     </style>
 </head>
 <body>
@@ -776,6 +790,7 @@
     <div class="main-wrapper">
         <!-- Imagem do Topo -->
        <img src="SEU LIXO.png" alt="Natal Roleta Topo" class="topo-imagem">
+       <img src="ahahah.png" alt="" class="sla">
 
         <div class="content-wrapper">
             <!-- ✅ NOVA DIV: Envolve Roleta + Card -->
