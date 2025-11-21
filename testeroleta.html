@@ -50,6 +50,8 @@
             object-position: center top; /* você escolhe onde cortar */
             display: block;
         }
+
+
         
         @keyframes pulsar {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
@@ -555,7 +557,7 @@
 
         /* Mobile */
         @media (max-width: 768px) {
-           
+          
 
             .roleta-e-card-wrapper {
                 grid-template-columns: 1fr;
@@ -650,8 +652,10 @@
  
         /* Mobile Pequeno */
         @media (max-width: 480px) {
-            
-
+           
+            .topo-imagem{
+                height: 50
+            }
             .content-wrapper {
                 gap: 3px;  /* ✅ REDUZIDO de 8px para 5px */
                 padding: 0px 5px;
@@ -760,7 +764,7 @@
     </style>
 </head>
 <body>
-   <!-- <!-- Vídeo de Fundo
+   <!-- Vídeo de Fundo
     <video id="video-fundo" autoplay loop muted playsinline>
         <source src="fundo roleta.mp4" type="video/mp4">
     </video>
