@@ -103,6 +103,7 @@
         }
 
         .card-premios {
+            position: relative;
             background: white;
             border-radius: 15px;
             padding: 5px;
@@ -797,12 +798,22 @@
                     </div>
 
                     <!-- Card: Próximos Prêmios (AGORA À DIREITA) -->
-                    <div class="card-premios">
-                        <h3>Próximos Prêmios:</h3>
-                        <div id="listaPremios">
-                            <div class="sem-premios">Carregando...</div>
-                        </div>
+                   <!-- Card: Próximos Prêmios -->
+                <div class="card-premios">
+                    <h3>Próximos Prêmios:</h3>
+
+                    <!-- Lista preenchida pelo JS -->
+                    <div id="listaPremios">
+                        <div class="sem-premios">Carregando...</div>
                     </div>
+
+                    <!-- Loading dentro do card -->
+                    <div class="loading" id="loading" style="display:none;">
+                        Carregando...
+                    </div>
+                </div>
+
+                    
 
                     <div class="resultado" id="resultado">
                         <h2>🎉 PARABÉNS! 🎉</h2>
@@ -810,9 +821,6 @@
                         <div class="premio" id="premioGanhador"></div>
                     </div>
 
-                    <div class="loading" id="loading" style="display:none;">
-                        Carregando dados...
-                    </div>
                 </div>
 
             </div> <!-- Fecha roleta-e-card-wrapper -->
@@ -820,16 +828,7 @@
                   
                
 
-                <div class="resultado" id="resultado">
-                    <h2> PARABÉNS! </h2>
-                    <div class="ganhador" id="nomeGanhador"></div>
-                    <div class="premio" id="premioGanhador"></div>
-                </div>
-
-                <div class="loading" id="loading" style="display:none;">
-                    Carregando dados...
-                </div>
-            </div>
+              
 
             
 
