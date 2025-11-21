@@ -22,8 +22,9 @@
             background: linear-gradient(135deg, #298ff0b6 0%, #6cecf0a1 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 0;
             margin: 0;
         }
@@ -232,11 +233,26 @@
             margin-bottom: 10px;
         }
 
+        .topo-banner {
+            display: block;
+            width: 100%;
+
+            /* 🔥 isso aqui controla a altura! */
+            height: 80px;  /* coloque o valor que quiser: 50px, 70px, 100px... */
+
+            object-fit: cover;  /* corta verticalmente sem distorcer */
+            object-position: center top; /* mostra a parte mais "bonita" da imagem */
+            margin: 0;
+        }
+
+
+
+
     </style>
 </head>
 <body>
-    <div class="bandeirinhas"></div>
-
+    <img class="topo-banner" src="raspadinha pro fdppppppppppp.png" alt="salva">
+    
     <div class="container">
         <div class="raspadinha-card">
             <div class="titulo-raspe">Raspe e Descubra Seu Prêmio</div>
