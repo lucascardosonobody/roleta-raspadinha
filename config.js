@@ -78,6 +78,7 @@ const CONFIG = {
         INDICACOES: '/api/indicacoes',
         REGISTRAR_SORTEIO: '/api/registrar-sorteio',
         REGISTRAR_AVALIACAO: '/api/registrar-avaliacao',
+        VERIFICAR_AVALIACAO: (id) => `/api/verificar-avaliacao/${id}`,
         
         // === COMANDOS (Sistema de comunicação Admin -> Cliente) ===
         VERIFICAR_COMANDO: '/api/verificar-comando',

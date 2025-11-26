@@ -1453,32 +1453,50 @@
     }
 
 /**
- * Avaliar no Google (COM CONTROLE)
+ * Avaliar no Google (COM CONTROLE POR USUÁRIO NO BANCO)
  */
 async function avaliarGooglePrincipal() {
-    console.log('⭐ FUNÇÃO avaliarGooglePrincipal CHAMADA');    
+    console.log('⭐ FUNÇÃO avaliarGooglePrincipal CHAMADA');
     
-    // 🚫 VERIFICAR SE JÁ AVALIOU
-    const jaAvaliou = localStorage.getItem('ja_avaliou_google');
-    if (jaAvaliou === 'true') {
-        console.log('⚠️ Usuário já avaliou anteriormente');
+    // 🆕 BUSCAR ID DO USUÁRIO
+    const participante_id = usuarioDados.id || localStorage.getItem('participante_id');
+    
+    if (!participante_id) {
+        console.error('❌ ID do participante não encontrado');
         mostrarModalUniversal(
-            '⭐ Você já avaliou!', 
-            'Você já deixou sua avaliação e ganhou suas chances extras. Obrigado! 💚',
+            '❌ Erro', 
+            'Não foi possível identificar seu usuário. Recarregue a página.',
             '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
         );
         return;
     }
     
-    // Abrir link de avaliação
-    window.open('https://www.google.com/search?client=firefox-b-d&sca_esv=b51b2d73c9f7d5a8&sxsrf=AE3TifOWqh-cmNhVexRaKSVvIc9PRn3s2w:1762954191849&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EznqF209KmUYAYyR_LEZvMiKlFfMAnyLZs8R3d63ETsKkA9MN61SR4SzaFzrKpJgcpCTdFMI6oGxRg8qGmeaCp_8041BGd823QBVadoIwa4LKY_PrFXhc2fsS0oCGeDCQNxn8S6fvCIeEubFUPB-SXx1z2vOCGF7-ehFsCRf2qugTEX2aHrs_H0M-k5I8MLDB2FimJ4RA3ETqibsv-4bxmkGZKNt0QLan9MatyARChmpWPbtXp3ktIjQ90HRo22rZhJ86-s%3D&q=UNISENSE+-+Sa%C3%BAde+e+Est%C3%A9tica+Avan%C3%A7ada+%7C+Botox,+Preenchimento+Labial,+Harmoniza%C3%A7%C3%A3o+Facial,+Bioestimuladores,+CO2+Fracionado...+Coment%C3%A1rios&sa=X&ved=2ahUKEwic-PCS3OyQAxXRELkGHXJ3PSoQ0bkNegQIQBAE&biw=1313&bih=654&dpr=1', '_blank');
-    
     try {
+        // 🔍 VERIFICAR NO BANCO SE JÁ AVALIOU
+        const responseVerificar = await fetch(
+            CONFIG.buildURL(CONFIG.API.VERIFICAR_AVALIACAO(participante_id))
+        );
+        const dataVerificar = await responseVerificar.json();
+        
+        if (dataVerificar.ja_avaliou) {
+            console.log('⚠️ Usuário já avaliou anteriormente (verificado no banco)');
+            mostrarModalUniversal(
+                '⭐ Você já avaliou!', 
+                'Você já deixou sua avaliação e ganhou suas chances extras. Obrigado! 💚',
+                '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+            );
+            return;
+        }
+        
+        // ✅ ABRIR LINK DE AVALIAÇÃO
+        window.open('https://www.google.com/search?client=firefox-b-d&sca_esv=b51b2d73c9f7d5a8&sxsrf=AE3TifOWqh-cmNhVexRaKSVvIc9PRn3s2w:1762954191849&si=AMgyJEtREmoPL4P1I5IDCfuA8gybfVI2d5Uj7QMwYCZHKDZ-EznqF209KmUYAYyR_LEZvMiKlFfMAnyLZs8R3d63ETsKkA9MN61SR4SzaFzrKpJgcpCTdFMI6oGxRg8qGmeaCp_8041BGd823QBVadoIwa4LKY_PrFXhc2fsS0oCGeDCQNxn8S6fvCIeEubFUPB-SXx1z2vOCGF7-ehFsCRf2qugTEX2aHrs_H0M-k5I8MLDB2FimJ4RA3ETqibsv-4bxmkGZKNt0QLan9MatyARChmpWPbtXp3ktIjQ90HRo22rZhJ86-s%3D&q=UNISENSE+-+Sa%C3%BAde+e+Est%C3%A9tica+Avan%C3%A7ada+%7C+Botox,+Preenchimento+Labial,+Harmoniza%C3%A7%C3%A3o+Facial,+Bioestimuladores,+CO2+Fracionado...+Coment%C3%A1rios&sa=X&ved=2ahUKEwic-PCS3OyQAxXRELkGHXJ3PSoQ0bkNegQIQBAE&biw=1313&bih=654&dpr=1', '_blank');
+        
+        // 💾 REGISTRAR AVALIAÇÃO NO BANCO
         const response = await fetch(CONFIG.buildURL(CONFIG.API.REGISTRAR_AVALIACAO), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                participante_id: usuarioDados.id,
+                participante_id: participante_id,
                 participante_nome: usuarioDados.nome,
                 participante_email: usuarioDados.email
             })
@@ -1487,11 +1505,7 @@ async function avaliarGooglePrincipal() {
         const data = await response.json();
         
         if (data.success) {
-            console.log('✅ Avaliação registrada com sucesso');
-            
-            // 💾 MARCAR QUE JÁ AVALIOU (permanente no navegador)
-            localStorage.setItem('ja_avaliou_google', 'true');
-            console.log('💾 Marcado como "já avaliou" no localStorage');
+            console.log('✅ Avaliação registrada no banco de dados');
             
             // 🎁 ADICIONAR +2 CHANCES NA RASPADINHA
             const iframeRaspadinha = document.getElementById('iframe-raspadinha');
@@ -1503,13 +1517,28 @@ async function avaliarGooglePrincipal() {
                 
                 console.log('✅ +2 chances enviadas para a raspadinha!');
             }
+            
+            fecharModal('modal-chances-acabaram');
+            fecharModal('modalChancesAcabaramRaspadinha');
+            
+            mostrarModalUniversal(
+                '🎉 Obrigado!', 
+                'Você ganhou <strong>+2 chances</strong> extras!',
+                '<button class="btn-modal verde" onclick="fecharModal(\'modal-universal\')">CONTINUAR JOGANDO</button>'
+            );
         } else {
             throw new Error(data.error || 'Erro ao registrar avaliação');
         }
         
     } catch (error) {
-        console.error('❌ Erro ao registrar avaliação:', error);
+        console.error('❌ Erro ao processar avaliação:', error);
+        mostrarModalUniversal(
+            '❌ Erro', 
+            'Ocorreu um erro ao processar sua avaliação. Tente novamente.',
+            '<button class="btn-modal" onclick="fecharModal(\'modal-universal\')">OK</button>'
+        );
     }
+}
     
     fecharModal('modal-chances-acabaram');
     fecharModal('modalChancesAcabaramRaspadinha');
