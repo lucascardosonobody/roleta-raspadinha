@@ -35,8 +35,8 @@ const ALLOWED_ORIGINS = [
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     
-    // Se a origem está na lista de permitidas, permite
-=======
+// Se a origem está na lista de permitidas, permite
+
 // CONFIGURAÇÃO DO POSTGRESQL
 // ============================================
 
