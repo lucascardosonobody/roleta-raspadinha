@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Principal - Sistema Sorteio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.6s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link {
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(147, 51, 234, 0.1);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="mainContent">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-white shadow-xl">
+                <div class="p-6 border-b">
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        🎰 Sistema Sorteio
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Versão 1.0</p>
+                </div>
+
+                <nav class="p-4">
+                    <a href="/admin/dashboard.html" class="nav-link active flex items-center space-x-3 px-4 py-3 rounded-lg mb-2">
+                        <span class="text-xl">📊</span>
+                        <span class="font-semibold">Dashboard</span>
+                    </a>
+                    <a href="/admin/paineladm.html" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2">
+                        <span class="text-xl">⚙️</span>
+                        <span class="font-semibold">Administração</span>
+                    </a>
+                    <a href="/admin/historico.html" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2">
+                        <span class="text-xl">🏆</span>
+                        <span class="font-semibold">Histórico</span>
+                    </a>
+                    <a href="/admin/indicacoes.html" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2">
+                        <span class="text-xl">🔔</span>
+                        <span class="font-semibold">Indicações</span>
+                    </a>
+                    <a href="/final.html" class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg mb-2">
+                        <span class="text-xl">🎯</span>
+                        <span class="font-semibold">Página Pública</span>
+                    </a>
+                </nav>
+
+                <div class="absolute bottom-0 w-64 p-4 border-t">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                                <span id="userInitial">A</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800" id="userName">Admin</p>
+                                <p class="text-xs text-gray-600">Administrador</p>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="text-red-500 hover:text-red-700 transition" title="Sair">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Conteúdo Principal -->
+            <main class="flex-1 overflow-y-auto">
+                <!-- Header -->
+                <header class="bg-white shadow-sm p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">Dashboard Principal</h2>
+                            <p class="text-gray-600 mt-1">Visão geral do sistema de sorteios</p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button onclick="atualizarDados()"
+                                class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition flex items-center space-x-2">
+                                <span>🔄</span>
+                                <span>Atualizar</span>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-6">
+                    <!-- Cards de Estatísticas -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white fade-in">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100 text-sm font-semibold">Total de Participantes</p>
+                                    <p class="text-4xl font-bold mt-2" id="totalParticipantes">0</p>
+                                    <p class="text-blue-100 text-xs mt-2" id="trendParticipantes">↑ Carregando...</p>
+                                </div>
+                                <div class="text-6xl opacity-20">👥</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white fade-in">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm font-semibold">Prêmios Distribuídos</p>
+                                    <p class="text-4xl font-bold mt-2" id="premiosDistribuidos">0</p>
+                                    <p class="text-green-100 text-xs mt-2" id="trendPremios">↑ Carregando...</p>
+                                </div>
+                                <div class="text-6xl opacity-20">🎁</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white fade-in">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100 text-sm font-semibold">Sorteios Realizados</p>
+                                    <p class="text-4xl font-bold mt-2" id="sorteiosRealizados">0</p>
+                                    <p class="text-purple-100 text-xs mt-2" id="trendSorteios">↑ Carregando...</p>
+                                </div>
+                                <div class="text-6xl opacity-20">🎲</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-xl p-6 text-white fade-in">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-orange-100 text-sm font-semibold">Taxa de Conversão</p>
+                                    <p class="text-4xl font-bold mt-2" id="taxaConversao">0%</p>
+                                    <p class="text-orange-100 text-xs mt-2" id="trendConversao">↑ Carregando...</p>
+                                </div>
+                                <div class="text-6xl opacity-20">📈</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de Distribuição de Prêmios -->
+                    <div class="grid grid-cols-1 mb-6">
+                        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Distribuição de Prêmios</h3>
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4">
+                                <canvas id="graficoDistribuicao" class="w-full" style="max-height: 200px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ganhadores -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <!-- Ganhadores da Roleta -->
+                        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">🎡 Ganhadores da Roleta</h3>
+                                <a href="/admin/historico.html" class="text-purple-600 text-sm font-semibold hover:underline">Ver todos →</a>
+                            </div>
+                            <div id="ganhadoresRoleta" class="space-y-3 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8">
+                                    <div class="text-4xl mb-2">⏳</div>
+                                    <p>Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ganhadores da Raspadinha -->
+                        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">🎰 Ganhadores da Raspadinha</h3>
+                                <a href="/admin/historico.html" class="text-purple-600 text-sm font-semibold hover:underline">Ver todos →</a>
+                            </div>
+                            <div id="ganhadoresRaspadinha" class="space-y-3 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8">
+                                    <div class="text-4xl mb-2">⏳</div>
+                                    <p>Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prêmios Disponíveis -->
+                    <div class="grid grid-cols-1">
+                        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">🎁 Prêmios Disponíveis</h3>
+                                <a href="/admin/paineladm.html" class="text-purple-600 text-sm font-semibold hover:underline">Gerenciar →</a>
+                            </div>
+                            <div id="premiosDisponiveis" class="space-y-3 max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-500 py-8">
+                                    <div class="text-4xl mb-2">⏳</div>
+                                    <p>Carregando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Config DEVE vir ANTES do script principal -->
+    <script src="/config.js"></script>
+    
+    <script>
+        let chartPremios;
+
+        // Formatar data relativa
+        function formatarDataRelativa(dataString) {
+            const data = new Date(dataString);
+            const agora = new Date();
+            const diff = Math.floor((agora - data) / 1000);
+
+            if (diff < 60) return 'Agora mesmo';
+            if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
+            
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const hora = String(data.getHours()).padStart(2, '0');
+            const min = String(data.getMinutes()).padStart(2, '0');
+            
+            return `${dia}/${mes} ${hora}:${min}`;
+        }
+
+        // Carregar Dashboard
+        async function carregarDashboard() {
+            console.log('🔄 Carregando dashboard...');
+            
+            try {
+                // ✅ CONFIG.fetch já retorna o JSON diretamente
+                const data = await CONFIG.fetch(CONFIG.API.DASHBOARD);
+                console.log('✅ Dados recebidos:', data);
+                
+                // Validar se recebeu dados
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Dados inválidos recebidos da API');
+                }
+                
+                // Atualizar estatísticas
+                document.getElementById('totalParticipantes').textContent = data.total_participantes || 0;
+                document.getElementById('premiosDistribuidos').textContent = data.premios_distribuidos || 0;
+                document.getElementById('sorteiosRealizados').textContent = data.sorteios_realizados || 0;
+                document.getElementById('taxaConversao').textContent = (data.taxa_conversao || 0) + '%';
+                
+                // Atualizar trends
+                document.getElementById('trendParticipantes').textContent = `↑ +${data.participantes_semana || 0} esta semana`;
+                document.getElementById('trendPremios').textContent = `↑ +${data.premios_distribuidos || 0} total`;
+                document.getElementById('trendSorteios').textContent = `↑ +${data.participantes_mes || 0} este mês`;
+                document.getElementById('trendConversao').textContent = `↑ +${data.crescimento_semana || 0}% esta semana`;
+                
+                // Carregar seções
+                carregarPremiosMaisSorteados(data.premios_mais_sorteados || []);
+                carregarGanhadoresRoleta(data.ganhadores_roleta || []);
+                carregarGanhadoresRaspadinha(data.ganhadores_raspadinha || []);
+                carregarPremiosDisponiveis(data.premios_disponiveis || []);
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dashboard:', error);
+                console.error('Stack trace:', error.stack);
+                mostrarErro();
+            }
+        }
+
+        // Carregar prêmios mais sorteados
+        function carregarPremiosMaisSorteados(premios) {
+            const canvasElement = document.getElementById('graficoDistribuicao');
+            
+            if (!canvasElement) {
+                console.error('❌ Elemento canvas não encontrado');
+                return;
+            }
+            
+            if (premios.length === 0) {
+                canvasElement.style.display = 'none';
+                const parent = canvasElement.parentElement;
+                if (parent) {
+                    const oldMsg = parent.querySelector('.empty-message');
+                    if (oldMsg) oldMsg.remove();
+                    
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'empty-message text-center text-gray-500 py-8';
+                    emptyDiv.innerHTML = `
+                        <div class="text-4xl mb-2">🏆</div>
+                        <p>Nenhum prêmio sorteado ainda</p>
+                    `;
+                    parent.appendChild(emptyDiv);
+                }
+                return;
+            }
+            
+            const parent = canvasElement.parentElement;
+            if (parent) {
+                const oldMsg = parent.querySelector('.empty-message');
+                if (oldMsg) oldMsg.remove();
+            }
+            
+            canvasElement.style.display = 'block';
+            
+            if (chartPremios) {
+                chartPremios.destroy();
+                chartPremios = null;
+            }
+            
+            try {
+                const ctx = canvasElement.getContext('2d');
+                if (!ctx) {
+                    console.error('❌ Não foi possível obter contexto do canvas');
+                    return;
+                }
+                
+                chartPremios = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: premios.map(p => p.premio_nome),
+                        datasets: [{
+                            data: premios.map(p => p.quantidade),
+                            backgroundColor: [
+                                'rgb(147, 51, 234)',
+                                'rgb(236, 72, 153)',
+                                'rgb(59, 130, 246)',
+                                'rgb(16, 185, 129)',
+                                'rgb(245, 158, 11)'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 10,
+                                    font: { size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('❌ Erro ao criar gráfico:', error);
+            }
+        }
+
+        // Carregar ganhadores da roleta
+        function carregarGanhadoresRoleta(ganhadores) {
+            const container = document.getElementById('ganhadoresRoleta');
+            
+            if (ganhadores.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">🎡</div>
+                        <p>Nenhum ganhador da roleta ainda</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = ganhadores.slice(0, 10).map(g => `
+                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:shadow-md transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold">
+                            ${g.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${g.nome}</p>
+                            <p class="text-sm text-gray-600">🎁 ${g.premio_nome}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-500">${formatarDataRelativa(g.data_sorteio)}</span>
+                </div>
+            `).join('');
+        }
+
+        // Carregar ganhadores da raspadinha
+        function carregarGanhadoresRaspadinha(ganhadores) {
+            const container = document.getElementById('ganhadoresRaspadinha');
+            
+            if (ganhadores.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">🎰</div>
+                        <p>Nenhum ganhador da raspadinha</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = ganhadores.slice(0, 10).map(g => `
+                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                            ${g.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${g.nome}</p>
+                            <p class="text-sm text-gray-600">🎁 ${g.premio_nome}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-500">${formatarDataRelativa(g.data_sorteio)}</span>
+                </div>
+            `).join('');
+        }
+
+        // Carregar prêmios disponíveis
+        function carregarPremiosDisponiveis(premios) {
+            const container = document.getElementById('premiosDisponiveis');
+            
+            if (premios.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">🎁</div>
+                        <p>Nenhum prêmio cadastrado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = premios.slice(0, 8).map(p => `
+                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">${p.icone || '🎁'}</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">${p.nome}</p>
+                            <p class="text-sm text-gray-600">
+                                ${p.tipo === 'ambos' ? 'Sorteio & Raspadinha' : 
+                                  p.tipo === 'sorteio' ? 'Apenas Sorteio' : 'Apenas Raspadinha'}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold ${p.ativo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                        ${p.ativo ? '✓ Ativo' : '✗ Inativo'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Mostrar erro
+        function mostrarErro() {
+            const ids = ['ganhadoresRoleta', 'ganhadoresRaspadinha', 'premiosDisponiveis'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = `
+                        <div class="text-center text-red-500 py-8">
+                            <div class="text-4xl mb-2">⚠️</div>
+                            <p>Erro ao carregar dados</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Atualizar dados
+        async function atualizarDados() {
+            await carregarDashboard();
+        }
+
+        // Inicialização
+        window.addEventListener('load', () => {
+            console.log('🚀 Dashboard inicializado');
+            carregarDashboard();
+            setInterval(carregarDashboard, 60000); // Auto-refresh a cada 1 minuto
+        });
+        
+        function logout() {
+            if (confirm('❓ Deseja realmente sair?')) {
+                console.log('👋 Fazendo logout...');
+                window.location.href = '/logout';
+            }
+        }
+    </script>
+</body>
+</html>
