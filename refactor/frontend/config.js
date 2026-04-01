@@ -2,7 +2,7 @@
   const envApi = global.__API_BASE_URL__;
   const hostApi = global.location.hostname === 'localhost'
     ? 'http://localhost:3000'
-    : 'https://SEU-BACKEND-NO-RENDER.onrender.com';
+    : 'https://roleta-raspadinha-ki12.onrender.com';
 
   const API_BASE_URL = (envApi || hostApi).replace(/\/$/, '');
 
