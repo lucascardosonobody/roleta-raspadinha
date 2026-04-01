@@ -210,9 +210,28 @@ app.get('/api/participantes-com-indicacoes', async (_req, res) => {
 
 app.get('/api/sorteios-agendados', async (_req, res) => {
   try {
-    const { data, error } = await supabase.from('draw_campaigns').select('*, prize_schedules(*)').order('data_sorteio', { ascending: false });
-    if (error) throw error;
-    return ok(res, data || []);
+    const { data: campaigns, error: campaignsError } = await supabase
+      .from('draw_campaigns')
+      .select('*')
+      .order('data_sorteio', { ascending: false });
+
+    if (campaignsError) throw campaignsError;
+
+    const { data: schedules, error: schedulesError } = await supabase
+      .from('prize_schedules')
+      .select('*')
+      .eq('campaign_kind', 'roleta');
+
+    if (schedulesError) throw schedulesError;
+
+    const data = (campaigns || []).map((campaign) => ({
+      ...campaign,
+      prize_schedules: (schedules || []).filter(
+        (item) => item.campaign_id === campaign.id
+      )
+    }));
+
+    return ok(res, data);
   } catch (error) {
     return badRequest(res, error);
   }
@@ -246,9 +265,28 @@ app.put('/api/sorteios-agendados/:id', async (req, res) => {
 
 app.get('/api/raspadinhas-agendadas', async (_req, res) => {
   try {
-    const { data, error } = await supabase.from('scratch_campaigns').select('*, prize_schedules(*)').order('data_raspadinha', { ascending: false });
-    if (error) throw error;
-    return ok(res, data || []);
+    const { data: campaigns, error: campaignsError } = await supabase
+      .from('scratch_campaigns')
+      .select('*')
+      .order('data_raspadinha', { ascending: false });
+
+    if (campaignsError) throw campaignsError;
+
+    const { data: schedules, error: schedulesError } = await supabase
+      .from('prize_schedules')
+      .select('*')
+      .eq('campaign_kind', 'raspadinha');
+
+    if (schedulesError) throw schedulesError;
+
+    const data = (campaigns || []).map((campaign) => ({
+      ...campaign,
+      prize_schedules: (schedules || []).filter(
+        (item) => item.campaign_id === campaign.id
+      )
+    }));
+
+    return ok(res, data);
   } catch (error) {
     return badRequest(res, error);
   }
