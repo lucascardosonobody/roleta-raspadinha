@@ -1077,19 +1077,18 @@
                 throw new Error(data.error || 'Erro ao comunicar com o servidor.');
             }
 
-            usuarioDados = data.user;
+            usuarioDados = data.participante;
 
-        // 🆕 SALVAR NO LOCALSTORAGE IMEDIATAMENTE
-        localStorage.setItem('participante_nome', data.user.nome);
-        localStorage.setItem('participante_email', data.user.email);
-        localStorage.setItem('participante_whatsapp', data.user.whatsapp);
-        localStorage.setItem('participante_id', data.user.id);
+            localStorage.setItem('participante_nome', data.participante.nome);
+            localStorage.setItem('participante_email', data.participante.email);
+            localStorage.setItem('participante_whatsapp', data.participante.whatsapp);
+            localStorage.setItem('participante_id', data.participante.id);
 
-        console.log('💾 Dados salvos no localStorage:', {
-            nome: data.user.nome,
-            email: data.user.email,
-            whatsapp: data.user.whatsapp
-        });
+            console.log('💾 Dados salvos no localStorage:', {
+                nome: data.participante.nome,
+                email: data.participante.email,
+                whatsapp: data.participante.whatsapp
+            });
             
             const iframeRaspadinha = document.getElementById('iframe-raspadinha');
             if (iframeRaspadinha && iframeRaspadinha.contentWindow) {
@@ -1102,7 +1101,6 @@
             document.getElementById('form-section').classList.add('hidden-form');
             document.getElementById('game-wrapper').classList.remove('hidden');
             
-            // 🎉 MOSTRAR MODAL DE BOAS-VINDAS
             setTimeout(() => {
                 document.getElementById('modal-boas-vindas').classList.add('active');
                 document.body.classList.add('modal-open');
