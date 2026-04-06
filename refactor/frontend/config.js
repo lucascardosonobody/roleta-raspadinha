@@ -48,35 +48,40 @@
   };
 
   async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    },
-    ...options
-  });
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
-  let data = null;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      },
+      ...options
+    });
 
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const message =
+        data?.message ||
+        data?.error?.message ||
+        data?.error ||
+        `HTTP ${response.status}`;
+
+      console.error('Erro completo da API:', data);
+      throw new Error(message);
+    }
+
+    return data;
   }
 
-  if (!response.ok) {
-    const message =
-      data?.message ||
-      data?.error?.message ||
-      data?.error ||
-      `HTTP ${response.status}`;
-
-    console.error('Erro completo da API:', data);
-    throw new Error(message);
-  }
-
-  return data;
-}
+  CONFIG.request = request;
+  CONFIG.fetch = request;
 
   global.CONFIG = CONFIG;
 })(window);
