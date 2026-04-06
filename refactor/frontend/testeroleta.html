@@ -46,12 +46,12 @@
         .topo-imagem {
             width: 100%;
             display: block;
-            margin: 0 auto;              /* ✅ Centralizar */
+            margin: 0 auto;
             vertical-align: top;
-            height: 180px;               /* ✅ Ajuste conforme necessário */
-            object-fit: contain;         /* ✅ IMPORTANTE: Mostra completo */
-            object-position: center;     /* ✅ Centraliza */
-            background: transparent;     /* ✅ Fundo transparente */
+            height: 180px;
+            object-fit: contain;
+            object-position: center;
+            background: transparent;
         }
         
         @keyframes pulsar {
@@ -59,7 +59,6 @@
             50% { transform: translate(-50%, -50%) scale(1.05); }
         }
 
-        /* Responsivo para o texto sobre a imagem */
         @media (max-width: 768px) {
             .texto-sobre-imagem {
                 font-size: 1.2em;
@@ -135,7 +134,7 @@
         }
 
         .container {
-            min-width: 0; /* Permite que o container encolha */
+            min-width: 0;
         }
 
         .roleta-wrapper {
@@ -181,50 +180,38 @@
             margin: 0 auto 50px;
         }
 
-       /* ajuste a posição como você já fazia */
         .seta-indicador{
             position:absolute;
-            top:-10px;                 /* afasta da roleta */
+            top:-10px;
             left:50%;
             transform:translateX(-50%) rotate(-45deg);
-
-            width:22px;                /* cabe�a menor */
+            width:22px;
             height:22px;
-
-            /* fuma�a suave */
             filter:
                 drop-shadow(0 2px 4px rgba(0,0,0,.35))
                 drop-shadow(0 10px 18px rgba(0,0,0,.18));
-
             z-index:9999;
             pointer-events:none;
-
-            /* garante que os z-index internos funcionem isolados */
             isolation:isolate;
-            }
+        }
 
-            /* CONTORNO branco (fica ATR�S) */
-            .seta-indicador::after{
+        .seta-indicador::after{
             content:"";
             position:absolute;
-            inset:-2px;                        /* controla a espessura do contorno */
+            inset:-2px;
             border-radius:50% 50% 50% 0;
             background:#fff;
-            z-index:0;                         /* atr�s */
-            }
+            z-index:0;
+        }
 
-            /* MIOLO dourado (fica NA FRENTE) */
-            .seta-indicador::before{
+        .seta-indicador::before{
             content:"";
             position:absolute;
             inset:0;
             border-radius:50% 50% 50% 0;
-            background:#B8860B;                /* dourado */
-            z-index:1;                         /* na frente */
+            background:#B8860B;
+            z-index:1;
         }
-
-
-
 
         .roleta-container {
             position: relative;
@@ -239,7 +226,7 @@
             border-radius: 50%;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             transition: transform 0.1s ease-out;
-             border: 8px solid #B8860B;
+            border: 8px solid #B8860B;
         }
 
         .centro-roleta {
@@ -312,21 +299,15 @@
             border-radius: 15px 15px 0 0;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
             animation: slideUp 0.5s ease-out;
-            
-            /* ✅ POSIÇÃO FIXA NO RODAPÉ */
             position: fixed;
-            bottom: 20px;  /* ✅ 20PX ACIMA DO RODAPÉ */
+            bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);  /* ✅ CENTRALIZADO */
-            
-            /* ✅ LARGURA */
+            transform: translateX(-50%);
             width: 90%;
             min-width: 150px;
             max-width: 600px;
             margin: 0;
             box-sizing: border-box;
-            
-            /* ✅ Z-INDEX */
             z-index: 9999;
         }
 
@@ -334,7 +315,6 @@
             display: block;
         }
 
-        /* ✅ ANIMAÇÃO */
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -346,39 +326,34 @@
             }
         }
 
-        /* ✅ TÍTULO "PARABÉNS" - MENOR */
         .resultado h2 {
             color: #667eea;
-            font-size: clamp(1.2em, 4vw, 1.5em);  /* ✅ REDUZIDO */
-            margin-bottom: 10px;                   /* ✅ REDUZIDO (era 15px) */
+            font-size: clamp(1.2em, 4vw, 1.5em);
+            margin-bottom: 10px;
             text-align: center;
             font-weight: 800;
         }
 
-        /* ✅ NOME DO GANHADOR - COMPACTO */
         .resultado .ganhador {
-            font-size: clamp(1em, 3.5vw, 1.4em);  /* ✅ REDUZIDO */
+            font-size: clamp(1em, 3.5vw, 1.4em);
             color: #333;
             font-weight: 900;
-            margin: 10px 0;                        /* ✅ REDUZIDO (era 15px) */
+            margin: 10px 0;
             text-align: center;
-            
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-word;
             hyphens: auto;
-            
             width: 100%;
             max-width: 100%;
-            padding: 8px;                          /* ✅ REDUZIDO (era 10px) */
+            padding: 8px;
             box-sizing: border-box;
-            line-height: 1.2;                      /* ✅ REDUZIDO (era 1.3) */
+            line-height: 1.2;
             white-space: normal;
             overflow: hidden;
             text-overflow: clip;
         }
 
-        /* ✅ CLASSE ESPECIAL PARA NOMES LONGOS */
         .resultado .ganhador.nome-extra-longo {
             font-size: clamp(0.85em, 2.8vw, 1.1em) !important;
             line-height: 1.1;
@@ -386,16 +361,14 @@
             letter-spacing: -0.5px;
         }
 
-        /* ✅ PRÊMIO - COMPACTO */
         .resultado .premio {
-            font-size: clamp(0.9em, 3vw, 1.2em);  /* ✅ REDUZIDO */
+            font-size: clamp(0.9em, 3vw, 1.2em);
             color: #fff;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 10px 15px;                    /* ✅ REDUZIDO (era 15px) */
-            border-radius: 8px;                    /* ✅ REDUZIDO (era 10px) */
+            padding: 10px 15px;
+            border-radius: 8px;
             text-align: center;
-            
             word-wrap: break-word;
             overflow-wrap: break-word;
             width: 100%;
@@ -417,7 +390,6 @@
             margin-top: 20px;
         }
 
-        /* Tablets */
         @media (max-width: 1024px) {
             .content-wrapper {
                 padding: 20px 15px;
@@ -485,7 +457,6 @@
             }
         }
 
-        /* Mobile */
         @media (max-width: 768px) {
             .topo-imagem {
                 max-height: 140px;
@@ -571,7 +542,6 @@
             }
         }
 
-        /* Mobile Pequeno */
         @media (max-width: 480px) {
             .topo-imagem {
                 height: 100%px;
@@ -676,30 +646,25 @@
                 font-size: 1.2em;
                 margin-top: 20px;
             }
-
         }
-
     </style>
 </head>
 <body>
-    <!-- Vídeo de Fundo -->
     <video id="video-fundo" autoplay loop muted playsinline>
         <source src="fundo roleta.mp4" type="video/mp4">
     </video>
     <div class="overlay-escuro"></div>
     
     <div class="main-wrapper">
-        <!-- Imagem do Topo -->
         <img src="roleta topo.png" alt="Roleta Topo" class="topo-imagem">
         <div class="content-wrapper">
-            <!-- Card Lateral: Próximos Prêmios (AGORA À ESQUERDA) -->
             <div class="card-premios">
                 <h3>Próximos<br>Prêmios:</h3>
                 <div id="listaPremios">
                     <div class="sem-premios">Carregando...</div>
                 </div>
             </div>
-            <!-- Coluna Principal: Roleta -->
+
             <div class="container">
                 <h1 id="tituloRoleta">🎡 Roleta de Prêmios 🎡</h1>
                 <div class="roleta-wrapper">
@@ -715,8 +680,6 @@
                   </div>
                 </div>
 
-               
-
                 <div class="resultado" id="resultado">
                     <h2> PARABÉNS! </h2>
                     <div class="ganhador" id="nomeGanhador"></div>
@@ -727,11 +690,10 @@
                     Carregando dados...
                 </div>
             </div>
+        </div>
+    </div>
 
     <script>
-        // ============================================
-        // VALIDAÇÃO DO CONFIG.JS
-        // ============================================
         if (typeof CONFIG === 'undefined') {
             console.error('❌ CONFIG.js não foi carregado!');
             alert('Erro: Sistema não configurado corretamente. Recarregue a página.');
@@ -745,21 +707,15 @@
         const premioId = urlParams.get('premio_id');
         const premioNome = urlParams.get('premio_nome');
 
-        // ============================================
-        // SISTEMA DE POLLING PARA RECEBER COMANDOS
-        // ============================================
-
-        const POLLING_INTERVAL = 2000; // Verifica a cada 2 segundos
+        const POLLING_INTERVAL = 2000;
         let ultimoComandoTimestamp = 0;
         let pollingAtivo = true;
 
-        // Função auxiliar para logs com timestamp
         function logPolling(emoji, mensagem, dados = null) {
             const agora = new Date().toLocaleTimeString('pt-BR');
             console.log(`${emoji} [${agora}] ${mensagem}`, dados || '');
         }
 
-        // Função para verificar comandos pendentes
         async function verificarComandos() {
             if (!pollingAtivo) return;
             
@@ -786,15 +742,12 @@
                     const comando = data.comando;
                     logPolling('✅', 'Comando encontrado:', JSON.stringify(comando));
                     
-                    // Verificar se é um comando novo (evitar reprocessamento)
                     if (comando.timestamp && comando.timestamp !== ultimoComandoTimestamp) {
                         logPolling('🎰', 'NOVO COMANDO DETECTADO! Processando...');
                         ultimoComandoTimestamp = comando.timestamp;
                         
-                        // Processar comando
                         await processarComando(comando);
                         
-                        // Limpar comando no servidor
                         try {
                             const limparResponse = await fetch(CONFIG.buildURL(CONFIG.API.LIMPAR_COMANDO), {
                                 method: 'POST',
@@ -823,27 +776,19 @@
             }
         }
 
-        // Função para processar o comando recebido
         async function processarComando(comando) {
             logPolling('⚙️', 'Processando comando:', JSON.stringify(comando));
             
-            // Verificar tipo de comando
             if (comando.tipo === 'INICIAR_SORTEIO' || comando.acao === 'sortear') {
                 logPolling('🎯', 'Comando de sorteio detectado!');
                 
-                // Verificar se há participantes
                 if (comando.participantes && Array.isArray(comando.participantes)) {
                     logPolling('👥', `${comando.participantes.length} participantes recebidos`);
                     
-                    // Recarregar dados para garantir que está atualizado
                     await carregarDados();
-                    
-                    // Aguardar 1 segundo para garantir que os dados foram carregados
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     
-                    // INICIAR O SORTEIO AUTOMATICAMENTE
                     try {
-                        // Verificar qual função de sorteio existe
                         if (typeof girarRoleta === 'function') {
                             logPolling('🎰', 'Chamando girarRoleta()...');
                             await girarRoleta();
@@ -859,7 +804,6 @@
                         } else {
                             logPolling('❌', 'Nenhuma função de sorteio encontrada!');
                             
-                            // Listar funções disponíveis que contenham 'sort' ou 'gir'
                             const funcoesDisponiveis = Object.keys(window).filter(k => 
                                 typeof window[k] === 'function' && 
                                 (k.toLowerCase().includes('sort') || k.toLowerCase().includes('gir'))
@@ -877,21 +821,16 @@
             }
         }
 
-        // Iniciar polling quando a página carregar
         function iniciarPolling() {
             logPolling('🚀', 'Iniciando sistema de polling...');
             logPolling('⏱️', `Intervalo: ${POLLING_INTERVAL}ms (${POLLING_INTERVAL/1000}s)`);
             
-            // Primeira verificação imediata
             verificarComandos();
-            
-            // Verificações periódicas
             setInterval(verificarComandos, POLLING_INTERVAL);
             
             logPolling('✅', 'Polling ativo! Aguardando comandos...');
         }
 
-        // Reconectar quando a página voltar do background (mobile)
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
                 logPolling('👁️', 'Página voltou ao foreground - verificando comandos...');
@@ -899,13 +838,11 @@
             }
         });
 
-        // Reconectar quando a internet voltar
         window.addEventListener('online', () => {
             logPolling('📶', 'Internet reconectada - verificando comandos...');
             verificarComandos();
         });
 
-        // Aguardar DOM estar pronto antes de iniciar
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 logPolling('📄', 'DOM carregado, iniciando polling em 500ms...');
@@ -925,12 +862,11 @@
         let premios = [];
         let girando = false;
         let anguloAtual = 0;
-        let sorteiosComHorarios = []; // Armazena os sorteios com horários
-        let filaPremios = []; // Fila de prêmios a serem sorteados
+        let sorteiosComHorarios = [];
+        let filaPremios = [];
 
         const cores = ['#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF', '#8B0000', '#FFFFFF'];
 
-        // Configurar canvas responsivo
         function ajustarCanvas() {
             const container = canvas.parentElement;
             const size = Math.min(container.clientWidth, container.clientHeight);
@@ -942,40 +878,33 @@
         window.addEventListener('resize', ajustarCanvas);
         ajustarCanvas();
 
-        // Carregar participantes e prêmios
         async function carregarDados() {
             try {
                 document.getElementById('loading').style.display = 'block';
                 
-                // ✅ CONFIG.fetch já retorna JSON diretamente
                 const [dataP, dataR] = await Promise.all([
                     CONFIG.fetch(CONFIG.API.PARTICIPANTES_ATIVOS),
                     CONFIG.fetch(CONFIG.API.SORTEIOS_AGENDADOS)
                 ]);
 
-                // ✅ Processar participantes
-                participantes = dataP.participantes || [];
+                participantes = Array.isArray(dataP) ? dataP : (dataP.participantes || []);
                 console.log('👥 Participantes carregados:', participantes.length);
 
-                // ✅ Processar sorteios
                 console.log('📦 API sorteios-agendados retornou:', dataR);
                 
                 const listaSorteios = Array.isArray(dataR) ? dataR : (dataR.sorteios || []);
                 console.log('📋 Lista de sorteios ANTES do filtro:', listaSorteios);
                 
-                // ✅ FILTRAR APENAS OS SORTEIOS ATIVOS NO HORÁRIO ATUAL
                 const agora = new Date();
-                
-                // 🆕 USAR TIMEZONE DE SÃO PAULO
                 const agoraEmSP = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
                 
                 const ano = agoraEmSP.getFullYear();
                 const mes = String(agoraEmSP.getMonth() + 1).padStart(2, '0');
                 const dia = String(agoraEmSP.getDate()).padStart(2, '0');
-                const dataHoje = `${ano}-${mes}-${dia}`; // YYYY-MM-DD
+                const dataHoje = `${ano}-${mes}-${dia}`;
                 
                 const horaAtual = String(agoraEmSP.getHours()).padStart(2, '0') + ':' + 
-                                String(agoraEmSP.getMinutes()).padStart(2, '0'); // HH:MM
+                                String(agoraEmSP.getMinutes()).padStart(2, '0');
                 
                 console.log('🕐 Data atual (SP):', dataHoje);
                 console.log('🕐 Hora atual (SP):', horaAtual);
@@ -991,45 +920,35 @@
                         return false;
                     }
                     
-                    if (sorteio.hora_inicio_sorteio > horaAtual) {
-                        console.log('❌ Sorteio ignorado (ainda não começou):', sorteio.id, sorteio.hora_inicio_sorteio);
+                    if (sorteio.hora_inicio > horaAtual) {
+                        console.log('❌ Sorteio ignorado (ainda não começou):', sorteio.id, sorteio.hora_inicio);
                         return false;
                     }
                     
-                    if (sorteio.hora_fim_sorteio < horaAtual) {
-                        console.log('❌ Sorteio ignorado (já terminou):', sorteio.id, sorteio.hora_fim_sorteio);
+                    if (sorteio.hora_fim < horaAtual) {
+                        console.log('❌ Sorteio ignorado (já terminou):', sorteio.id, sorteio.hora_fim);
                         return false;
                     }
                     
-                    console.log('✅ Sorteio ATIVO:', sorteio.id, sorteio.hora_inicio_sorteio, '-', sorteio.hora_fim_sorteio);
+                    console.log('✅ Sorteio ATIVO:', sorteio.id, sorteio.hora_inicio, '-', sorteio.hora_fim);
                     return true;
                 });
                 
                 console.log(`📊 Total de sorteios: ${listaSorteios.length}`);
                 console.log(`✅ Sorteios ativos agora: ${sorteiosAtivos.length}`);
                 
-                // 🆕 PROCESSAR PRÊMIOS CORRETAMENTE
                 const premiosMap = new Map();
                 const todosPremiosComHorario = [];
                 
                 sorteiosAtivos.forEach(sorteio => {
                     console.log('🔍 Processando sorteio:', sorteio);
                     
-                    let premiosDistribuicao = [];
-                    
-                    if (typeof sorteio.premios_distribuicao === 'string') {
-                        try {
-                            premiosDistribuicao = JSON.parse(sorteio.premios_distribuicao);
-                        } catch (e) {
-                            console.error('❌ Erro ao fazer parse:', e);
-                        }
-                    } else if (Array.isArray(sorteio.premios_distribuicao)) {
-                        premiosDistribuicao = sorteio.premios_distribuicao;
-                    }
+                    const premiosDistribuicao = Array.isArray(sorteio.prize_schedules)
+                        ? sorteio.prize_schedules
+                        : [];
                     
                     console.log('🎁 Prêmios da distribuição:', premiosDistribuicao);
                     
-                    // 🆕 ARMAZENAR TODOS OS PRÊMIOS COM HORÁRIO
                     premiosDistribuicao.forEach(item => {
                         if (item.premio_nome) {
                             const premioObj = {
@@ -1039,12 +958,10 @@
                                 horario_fim: item.horario_fim
                             };
                             
-                            // Adicionar ao mapa (sem duplicatas)
                             if (!premiosMap.has(item.premio_nome)) {
                                 premiosMap.set(item.premio_nome, premioObj);
                             }
                             
-                            // Adicionar à lista completa (com horários)
                             todosPremiosComHorario.push(premioObj);
                         }
                     });
@@ -1054,24 +971,20 @@
                 console.log('✅ Prêmios únicos extraídos:', premios);
                 console.log('📋 Todos prêmios com horário:', todosPremiosComHorario);
 
-                // Carregar fila salva ou criar nova
                 carregarFilaDoStorage();
 
-                // Se a fila está vazia ou desatualizada, criar nova
                 if (filaPremios.length === 0 || !filaEstaAtualizada(premios, filaPremios)) {
                     filaPremios = [...premios];
                     salvarFilaNoStorage();
                     console.log('🆕 Nova fila criada:', filaPremios.map(p => p.nome));
                 }
 
-                // 🆕 ARMAZENAR LISTA COMPLETA COM HORÁRIOS
                 sorteiosComHorarios = todosPremiosComHorario;
                 console.log('📦 Prêmios com horários armazenados:', sorteiosComHorarios);
 
                 atualizarInfo();
                 desenharRoleta();
 
-                // 🆕 GIRAR AUTOMATICAMENTE SE FOR SORTEIO AUTOMÁTICO
                 if (isAutoSorteio && !girando && participantes.length > 0 && filaPremios.length > 0) {
                     console.log('⏳ Sorteio automático detectado! Iniciando em 2 segundos...');
                     setTimeout(() => {
@@ -1089,10 +1002,7 @@
         }
 
         function atualizarInfo() {
-            // Atualizar lista de prêmios no card lateral
             atualizarListaPremios();
-            
-            // Iniciar rotação de prêmios no título
             iniciarRotacaoPremios();
         }
 
@@ -1104,7 +1014,6 @@
                 return;
             }
             
-            // Mostrar a fila na ordem (primeiro que será sorteado aparece em cima)
             container.innerHTML = filaPremios.map((p, index) => 
                 `<div class="premio-item ${index === 0 ? 'proximo-premio' : ''}">${p.nome}</div>`
             ).join('');
@@ -1113,7 +1022,6 @@
         function iniciarRotacaoPremios() {
             const titulo = document.getElementById('tituloRoleta');
             
-            // Inicializar fila se estiver vazia
             if (filaPremios.length === 0 && premios.length > 0) { 
                 filaPremios = [...premios];
                 salvarFilaNoStorage();
@@ -1124,7 +1032,6 @@
                 return;
             }
             
-            // Mostrar o primeiro da fila
             const proximoPremio = filaPremios[0];
             titulo.innerHTML = ` <span class="premio-rotativo">${proximoPremio.nome}</span> `;
         }
@@ -1132,328 +1039,259 @@
         function moverPremioParaFinalDaFila() {
             if (filaPremios.length === 0) return;
             
-            // Remove o primeiro e adiciona no final
             const premioSorteado = filaPremios.shift();
             filaPremios.push(premioSorteado);
             
-            // Salvar fila atualizada
             salvarFilaNoStorage();
+            atualizarListaPremios();
+            iniciarRotacaoPremios();
             
-            // Atualizar visualmente
-                atualizarListaPremios();
-                iniciarRotacaoPremios();
+            console.log('🔄 Fila atualizada:', filaPremios.map(p => p.nome));
+        }
+
+        function salvarFilaNoStorage() {
+            try {
+                localStorage.setItem('filaPremios', JSON.stringify(filaPremios));
+            } catch (e) {
+                console.error('Erro ao salvar fila:', e);
+            }
+        }
+
+        function carregarFilaDoStorage() {
+            try {
+                const filaSalva = localStorage.getItem('filaPremios');
+                if (filaSalva) {
+                    filaPremios = JSON.parse(filaSalva);
+                    console.log('📂 Fila carregada do storage:', filaPremios.map(p => p.nome));
+                }
+            } catch (e) {
+                console.error('Erro ao carregar fila:', e);
+                filaPremios = [];
+            }
+        }
+
+        function filaEstaAtualizada(premiosAtuais, filaAtual) {
+            const nomesAtuais = premiosAtuais.map(p => p.nome).sort();
+            const nomesFila = filaAtual.map(p => p.nome).sort();
+            
+            if (nomesAtuais.length !== nomesFila.length) return false;
+            
+            return nomesAtuais.every((nome, index) => nome === nomesFila[index]);
+        }
+                    
+        function desenharRoleta() {
+            console.log('🎨 desenharRoleta() chamada');
+            console.log('👥 Participantes disponíveis:', participantes.length);
+            console.log('📋 Lista de participantes:', participantes);
+            
+            const logoRoleta = document.getElementById('logoRoleta');
+            const mensagemAguardando = document.getElementById('mensagemAguardando');
+            
+            if (!canvas.width || !canvas.height || canvas.width < 20 || canvas.height < 20) {
+                console.warn('⚠️ Canvas com tamanho inválido, ignorando desenho');
+                return;
+            }
+            
+            if (participantes.length === 0) {
+                console.log('⚠️ Nenhum participante - mostrando mensagem');
+                ctx.fillStyle = '#ddd';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                logoRoleta.style.display = 'none';
+                mensagemAguardando.style.display = 'block';
+                return;
+            } else {
+                console.log('✅ Desenhando roleta com', participantes.length, 'participantes');
+                logoRoleta.style.display = 'block';
+                mensagemAguardando.style.display = 'none';
+            }
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.max(20, canvas.width / 2 - 10);
+            const sliceAngle = (Math.PI * 2) / participantes.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            participantes.forEach((participante, i) => {
+                const startAngle = anguloAtual + sliceAngle * i;
+                const endAngle = startAngle + sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
                 
-                console.log('🔄 Fila atualizada:', filaPremios.map(p => p.nome));
-            }
+                const corBase = cores[i % cores.length];
+                ctx.fillStyle = corBase + '4D';
+                ctx.fill();
 
-            function salvarFilaNoStorage() {
-                try {
-                    localStorage.setItem('filaPremios', JSON.stringify(filaPremios));
-                } catch (e) {
-                    console.error('Erro ao salvar fila:', e);
-                }
-            }
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#8B0000';
 
-            function carregarFilaDoStorage() {
-                try {
-                    const filaSalva = localStorage.getItem('filaPremios');
-                    if (filaSalva) {
-                        filaPremios = JSON.parse(filaSalva);
-                        console.log('📂 Fila carregada do storage:', filaPremios.map(p => p.nome));
-                    }
-                } catch (e) {
-                    console.error('Erro ao carregar fila:', e);
-                    filaPremios = [];
-                }
-            }
+                const fontSize = Math.max(10, Math.floor(canvas.width * 0.032));
+                ctx.font = `bold ${fontSize}px Montserrat`;
+                ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
 
-            function filaEstaAtualizada(premiosAtuais, filaAtual) {
-                // Verificar se a fila tem todos os prêmios atuais
-                const nomesAtuais = premiosAtuais.map(p => p.nome).sort();
-                const nomesFila = filaAtual.map(p => p.nome).sort();
+                const primeiroNome = participante.nome.split(' ')[0];
                 
-                if (nomesAtuais.length !== nomesFila.length) return false;
+                console.log(`✏️ Desenhando nome na fatia ${i}:`, primeiroNome);
                 
-                return nomesAtuais.every((nome, index) => nome === nomesFila[index]);
+                const posicaoTexto = Math.max(30, radius - 20);
+                ctx.fillText(primeiroNome, posicaoTexto, 5);
+
+                ctx.restore();
+            });
+            
+            console.log('✅ Roleta desenhada com sucesso!');
+        }
+
+        async function girarRoleta() {
+            document.getElementById('logoRoleta').style.display = 'block';
+            document.getElementById('mensagemAguardando').style.display = 'none';
+            
+            if (girando) {
+                console.log('⚠️ Roleta já está girando, ignorando comando...');
+                return;
             }
-                    
-                    function desenharRoleta() {
-                        // ✅ ADICIONAR ESTES LOGS NO INÍCIO DA FUNÇÃO
-                        console.log('🎨 desenharRoleta() chamada');
-                        console.log('👥 Participantes disponíveis:', participantes.length);
-                        console.log('📋 Lista de participantes:', participantes);
-                        
-                        // Controlar exibição da logo/mensagem
-                        const logoRoleta = document.getElementById('logoRoleta');
-                        const mensagemAguardando = document.getElementById('mensagemAguardando');
-                        
-                        // ✅ VALIDAÇÃO: Garantir que o canvas tem tamanho válido
-                        if (!canvas.width || !canvas.height || canvas.width < 20 || canvas.height < 20) {
-                            console.warn('⚠️ Canvas com tamanho inválido, ignorando desenho');
-                            return;
-                        }
-                        
-                        if (participantes.length === 0) {
-                            console.log('⚠️ Nenhum participante - mostrando mensagem');
-                            ctx.fillStyle = '#ddd';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (participantes.length === 0) {
+                console.error('❌ Ainda não há participantes cadastrados!');
+                return;
+            }
+            
+            if (premios.length === 0) {
+                console.error('❌ Não há prêmios disponíveis!');
+                return;
+            }
 
-                            // Mostrar mensagem, esconder logo
-                            logoRoleta.style.display = 'none';
-                            mensagemAguardando.style.display = 'block';
-                            return;
-                        } else {
-                            console.log('✅ Desenhando roleta com', participantes.length, 'participantes');
-                            // Mostrar logo, esconder mensagem
-                            logoRoleta.style.display = 'block';
-                            mensagemAguardando.style.display = 'none';
-                        }
+            console.log('🎰 Iniciando sorteio da roleta...');
+            console.log('👥 Total de participantes:', participantes.length);
+            console.log('🎁 Prêmios disponíveis:', premios.length);
 
-                        const centerX = canvas.width / 2;
-                        const centerY = canvas.height / 2;
-                        
-                        // ✅ CORREÇÃO CRÍTICA: Garantir que o raio nunca seja negativo
-                        const radius = Math.max(20, canvas.width / 2 - 10);
-                        
-                        const sliceAngle = (Math.PI * 2) / participantes.length;
+            girando = true;
+            document.getElementById('resultado').classList.remove('ativo');
 
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const indiceVencedor = Math.floor(Math.random() * participantes.length);
+            const vencedor = participantes[indiceVencedor];
 
-                        participantes.forEach((participante, i) => {
-                            const startAngle = anguloAtual + sliceAngle * i;
-                            const endAngle = startAngle + sliceAngle;
+            console.log('🎯 Vencedor sorteado:', vencedor.nome);
 
-                            // Desenhar fatia
-                            ctx.beginPath();
-                            ctx.moveTo(centerX, centerY);
-                            
-                            // ✅ AGORA O RADIUS NUNCA SERÁ NEGATIVO
-                            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-                            ctx.closePath();
-                            
-                            // Adicionar transparência (30% de opacidade)
-                            const corBase = cores[i % cores.length];
-                            ctx.fillStyle = corBase + '4D'; // 4D = 30% de opacidade em hexadecimal
-                            ctx.fill();
+            const premioSorteado = filaPremios[0];
 
-                            // ✅ DESENHAR TEXTO - ADICIONAR LOGS AQUI
-                            ctx.save();
-                            ctx.translate(centerX, centerY);
-                            ctx.rotate(startAngle + sliceAngle / 2);
-                            ctx.textAlign = 'right';
+            console.log('🎁 Prêmio sorteado:', premioSorteado.nome);
 
-                            // Texto em bordô
-                            ctx.fillStyle = '#8B0000';
+            const sliceAngle = (Math.PI * 2) / participantes.length;
+            const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
+            const anguloSeta = -Math.PI / 2;
+            const rotacoesCompletas = Math.PI * 2 * 5;
+            const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
-                            // Ajustar tamanho da fonte baseado no tamanho do canvas
-                            const fontSize = Math.max(10, Math.floor(canvas.width * 0.032));
-                            ctx.font = `bold ${fontSize}px Montserrat`;
-                            ctx.shadowColor = 'rgba(255,255,255,0.8)';
-                            ctx.shadowBlur = 3;
-                            ctx.shadowOffsetX = 1;
-                            ctx.shadowOffsetY = 1;
+            const duracao = 5000;
+            const inicio = Date.now();
 
-                            const primeiroNome = participante.nome.split(' ')[0];
-                            
-                            console.log(`✏️ Desenhando nome na fatia ${i}:`, primeiroNome);
-                            
-                            // ✅ VALIDAÇÃO: Garantir que o texto não será desenhado fora do canvas
-                            const posicaoTexto = Math.max(30, radius - 20);
-                            ctx.fillText(primeiroNome, posicaoTexto, 5);
+            function animar() {
+                const agora = Date.now();
+                const progresso = Math.min((agora - inicio) / duracao, 1);
+                const easeOut = 1 - Math.pow(1 - progresso, 3);
+                
+                anguloAtual = anguloFinal * easeOut;
+                desenharRoleta();
 
-                            ctx.restore();
-                        });
-                        
-                        console.log('✅ Roleta desenhada com sucesso!');
-                    }
-
-                // ============================================
-                // SUBSTITUA A FUNÇÃO girarRoleta() ATUAL
-                // POR ESTA VERSÃO CORRIGIDA
-                // ============================================
-
-                async function girarRoleta() {
-                    // Garantir que a logo está visível durante o giro
-                    document.getElementById('logoRoleta').style.display = 'block';
-                    document.getElementById('mensagemAguardando').style.display = 'none';
-                    
-                    if (girando) {
-                        console.log('⚠️ Roleta já está girando, ignorando comando...');
-                        return;
-                    }
-                    
-                    if (participantes.length === 0) {
-                        console.error('❌ Ainda não há participantes cadastrados!');
-                        return;
-                    }
-                    
-                    if (premios.length === 0) {
-                        console.error('❌ Não há prêmios disponíveis!');
-                        return;
-                    }
-
-                    console.log('🎰 Iniciando sorteio da roleta...');
-                    console.log('👥 Total de participantes:', participantes.length);
-                    console.log('🎁 Prêmios disponíveis:', premios.length);
-
-                    girando = true;
-                    
-                    // ❌ REMOVER ESTA LINHA QUE CAUSAVA O ERRO:
-                    // document.getElementById('btnGirar').disabled = true;
-                    
-                    document.getElementById('resultado').classList.remove('ativo');
-
-                    // Sortear vencedor
-                    const indiceVencedor = Math.floor(Math.random() * participantes.length);
-                    const vencedor = participantes[indiceVencedor];
-
-                    console.log('🎯 Vencedor sorteado:', vencedor.nome);
-
-                    // PEGAR O PRIMEIRO PRÊMIO DA FILA (não aleatório!)
-                    const premioSorteado = filaPremios[0];
-
-                    console.log('🎁 Prêmio sorteado:', premioSorteado.nome);
-
-                    // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
-                    const sliceAngle = (Math.PI * 2) / participantes.length;
-
-                    // Ângulo do vencedor em relação à posição inicial
-                    const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-
-                    // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-                    // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
-                    const anguloSeta = -Math.PI / 2;
-
-                    // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-                    const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
-                    const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
-
-                    // Animação
-                    const duracao = 5000;
-                    const inicio = Date.now();
-
-                    function animar() {
-                        const agora = Date.now();
-                        const progresso = Math.min((agora - inicio) / duracao, 1);
-                        
-                        // Easing (desaceleração)
-                        const easeOut = 1 - Math.pow(1 - progresso, 3);
-                        
-                        anguloAtual = anguloFinal * easeOut;
-                        desenharRoleta();
-
-                        if (progresso < 1) {
-                            requestAnimationFrame(animar);
-                        } else {
-                            console.log('✅ Animação da roleta concluída!');
-                            mostrarResultado(vencedor, premioSorteado);
-                        }
-                    }
-
-                    animar();
+                if (progresso < 1) {
+                    requestAnimationFrame(animar);
+                } else {
+                    console.log('✅ Animação da roleta concluída!');
+                    mostrarResultado(vencedor, premioSorteado);
                 }
+            }
 
-                async function mostrarResultado(vencedor, premio) {
-                    console.log('🎯 mostrarResultado recebeu:');
-                    console.log('  Vencedor:', vencedor);
-                    console.log('  Premio:', premio);
-                    
-                    document.getElementById('nomeGanhador').textContent = vencedor.nome;
-                    document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
-                    document.getElementById('resultado').classList.add('ativo');
+            animar();
+        }
 
-                    // 🎯 REGISTRAR GANHADOR DA ROLETA
-                    try {
-                        const dadosRegistro = {
-                            participante: {
-                                nome: String(vencedor.nome || ''),
-                                email: String(vencedor.email || ''),
-                                whatsapp: String(vencedor.whatsapp || '')
-                            },
-                            premio: {
-                                id: Number(premio.id) || 0,
-                                nome: String(premio.nome || 'Prêmio')
-                            },
-                            tipo_sorteio: 'roleta'
-                        };
-                        
-                        console.log('📤 Enviando registro:', JSON.stringify(dadosRegistro, null, 2));
-                        
-                        const response = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json' 
-                            },
-                            body: JSON.stringify(dadosRegistro)
-                        });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('✅ Ganhador da roleta registrado com sucesso!', data);
-                        } else {
-                            const errorText = await response.text();
-                            console.error('❌ Erro HTTP', response.status, ':', errorText);
-                        }
-                        
-                    } catch (error) {
-                        console.error('❌ Erro ao registrar ganhador:', error);
+        async function mostrarResultado(vencedor, premio) {
+            console.log('🎯 mostrarResultado recebeu:');
+            console.log('  Vencedor:', vencedor);
+            console.log('  Premio:', premio);
+            
+            document.getElementById('nomeGanhador').textContent = vencedor.nome;
+            document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
+            document.getElementById('resultado').classList.add('ativo');
+
+            try {
+                const dadosRegistro = {
+                    participante_id: vencedor.id,
+                    premio_id: premio.id,
+                    tipo_sorteio: 'roleta'
+                };
+                
+                console.log('📤 Enviando registro:', JSON.stringify(dadosRegistro, null, 2));
+                
+                const data = await CONFIG.fetch(CONFIG.API.REGISTRAR_SORTEIO, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify(dadosRegistro)
+                });
+                
+                console.log('✅ Ganhador da roleta registrado com sucesso!', data);
+                
+            } catch (error) {
+                console.error('❌ Erro ao registrar ganhador:', error);
+            }
+
+            if (isAutoSorteio && window.opener) {
+                console.log('📤 Enviando resultado para o admin...');
+                
+                window.opener.postMessage({
+                    type: 'SORTEIO_CONCLUIDO',
+                    vencedor: {
+                        id: vencedor.id,
+                        nome: vencedor.nome,
+                        email: vencedor.email,
+                        whatsapp: vencedor.whatsapp
+                    },
+                    premio_id: premioId,
+                    premio_nome: premioNome
+                }, window.location.origin);
+                
+                console.log('✅ Resultado enviado! Fechando em 5 segundos...');
+                
+                setTimeout(() => {
+                    window.close();
+                }, 5000);
+                
+                return;
+            }
+
+            try {
+                window.parent.postMessage({
+                    action: 'resultadoRoleta',
+                    vencedor: {
+                        nome: vencedor.nome,
+                        email: vencedor.email
+                    },
+                    premio: {
+                        nome: premio.nome
                     }
+                }, '*');
+            } catch (e) {
+                console.error('Erro no postMessage:', e);
+            }
 
-                    // 🆕 ENVIAR RESULTADO PARA O ADMIN (SE VEIO DO SORTEIO AUTOMÁTICO)
-                    if (isAutoSorteio && window.opener) {
-                        console.log('📤 Enviando resultado para o admin...');
-                        
-                        window.opener.postMessage({
-                            type: 'SORTEIO_CONCLUIDO',
-                            vencedor: {
-                                id: vencedor.id,
-                                nome: vencedor.nome,
-                                email: vencedor.email,
-                                whatsapp: vencedor.whatsapp
-                            },
-                            premio_id: premioId,
-                            premio_nome: premioNome
-                        }, window.location.origin);
-                        
-                        console.log('✅ Resultado enviado! Fechando em 5 segundos...');
-                        
-                        // Fechar a janela após 5 segundos
-                        setTimeout(() => {
-                            window.close();
-                        }, 5000);
-                        
-                        return; // Não continua o resto do código
-                    }
+            setTimeout(() => {
+                moverPremioParaFinalDaFila();
+                girando = false;
+            }, 2000);
+        }
 
-                    // Enviar resultado para o parent (modo iframe - manter compatibilidade)
-                    try {
-                        window.parent.postMessage({
-                            action: 'resultadoRoleta',
-                            vencedor: {
-                                nome: vencedor.nome,
-                                email: vencedor.email
-                            },
-                            premio: {
-                                nome: premio.nome
-                            }
-                        }, '*');
-                    } catch (e) {
-                        console.error('Erro no postMessage:', e);
-                    }
-
-                    setTimeout(() => {
-                        moverPremioParaFinalDaFila();
-                        girando = false;
-                    }, 2000);
-                }
-
-        // ========================================
-        // ADICIONAR NO FINAL DO <script> da roleta.html
-        // ANTES de "carregarDados();"
-        // ========================================
-
-        // 
-        // Verificar configuração do sorteio automático
         async function verificarSorteioAutomatico() {
             console.log('🔄 Verificando sorteio automático...');
             
@@ -1475,10 +1313,8 @@
                 
                 console.log('✅ Sorteio ativo encontrado:', sorteioAtivo);
                 
-                // Verificar se atingiu o número de participantes
-                const participantes = await CONFIG.fetch(CONFIG.API.PARTICIPANTES);
-                
-                const totalParticipantes = participantes.filter(p => p.sorteado === 0).length;
+                const participantesResp = await CONFIG.fetch(CONFIG.API.PARTICIPANTES);
+                const totalParticipantes = participantesResp.filter(p => p.sorteado === 0).length;
                 
                 console.log(`👥 Participantes: ${totalParticipantes}/${sorteioAtivo.participantes_necessarios}`);
                 
@@ -1492,9 +1328,7 @@
             }
         }
 
-        // Função de girar automático (igual ao manual mas chama a API)
         async function girarRoletaAutomatico() {
-            // Garantir que a logo está visível durante o giro
             document.getElementById('logoRoleta').style.display = 'block';
             document.getElementById('mensagemAguardando').style.display = 'none';
             
@@ -1512,7 +1346,6 @@
             document.getElementById('resultado').classList.remove('ativo');
             
             try {
-                // CHAMAR API DE SORTEIO AUTOMÁTICO
                 console.log('📡 Chamando API de sorteio automático...');
                 const resultado = await CONFIG.fetch(CONFIG.API.EXECUTAR_SORTEIO_AUTOMATICO, {
                     method: 'POST',
@@ -1524,7 +1357,6 @@
                 const vencedor = resultado.resultado.participante;
                 const premioSorteado = resultado.resultado.premio;
                 
-                // Encontrar índice do vencedor na lista de participantes
                 const indiceVencedor = participantes.findIndex(p => 
                     p.email === vencedor.email || p.nome === vencedor.nome
                 );
@@ -1535,30 +1367,18 @@
                     return;
                 }
 
-                // Calcular ângulo final
-                // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
                 const sliceAngle = (Math.PI * 2) / participantes.length;
-
-                // Ângulo do vencedor em relação à posição inicial
                 const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-
-                // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-                // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
                 const anguloSeta = -Math.PI / 2;
-
-                // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-                const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+                const rotacoesCompletas = Math.PI * 2 * 5;
                 const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
-                // Animação
                 const duracao = 5000;
                 const inicio = Date.now();
 
                 function animar() {
                     const agora = Date.now();
                     const progresso = Math.min((agora - inicio) / duracao, 1);
-                    
-                    // Easing (desaceleração)
                     const easeOut = 1 - Math.pow(1 - progresso, 3);
                     
                     anguloAtual = anguloFinal * easeOut;
@@ -1579,7 +1399,6 @@
             }
         }
 
-        // Mostrar resultado do sorteio automático
         async function mostrarResultadoAutomatico(vencedor, premio) {
             console.log('🎉 SORTEIO AUTOMÁTICO CONCLUÍDO!');
             console.log('  Vencedor:', vencedor.nome);
@@ -1589,42 +1408,25 @@
             document.getElementById('premioGanhador').textContent = `🎁 ${premio.nome}`;
             document.getElementById('resultado').classList.add('ativo');
 
-            // Mover prêmio para o final da fila
             moverPremioParaFinalDaFila();
-            
-            // Recarregar participantes (o vencedor já foi marcado como sorteado pela API)
             await carregarDados();
             
-            // Aguardar 5 segundos e resetar
             setTimeout(() => {
                 document.getElementById('resultado').classList.remove('ativo');
                 girando = false;
-                
-                // Verificar novamente após 5 segundos
                 setTimeout(verificarSorteioAutomatico, 5000);
             }, 5000);
         }
 
-        // Iniciar verificação periódica (a cada 10 segundos)
-        setInterval(verificarSorteioAutomatico, 10000);
+        // setInterval(verificarSorteioAutomatico, 10000);
+        // setTimeout(verificarSorteioAutomatico, 3000);
 
-        // Verificar imediatamente ao carregar
-        setTimeout(verificarSorteioAutomatico, 3000);    
-
-        // Carregar dados ao iniciar
         carregarDados();
-
-        // Recarregar a cada 30 segundos
         setInterval(carregarDados, 30000);
-
-        // ============================================
-        // RECEBER SORTEIO AUTOMÁTICO DO PAINEL ADMIN
-        // ============================================
 
         window.addEventListener('message', async function(event) {
             console.log('📨 Mensagem recebida:', event.data);
             
-            // Verificar origem (segurança básica)
             if (event.origin !== window.location.origin) {
                 console.warn('⚠️ Mensagem de origem não confiável:', event.origin);
                 return;
@@ -1638,7 +1440,6 @@
                 const participante = dados.participante;
                 const premio = dados.premio;
 
-                // Validar dados recebidos
                 if (!participante || !premio) {
                     console.error('❌ Dados inválidos recebidos:', { participante, premio });
                     return;
@@ -1646,16 +1447,10 @@
 
                 console.log('✅ Dados validados:', { participante, premio });
 
-                // Aguardar 2 segundos para garantir que a página carregou
                 await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Recarregar participantes para ter certeza que o sorteado está na lista
                 await carregarDados();
-
-                // Aguardar mais 1 segundo após carregar dados
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Verificar se o participante sorteado está na lista
                 const participanteNaLista = participantes.find(p => 
                     p.id === participante.id || p.email === participante.email || p.nome === participante.nome
                 );
@@ -1665,7 +1460,6 @@
                     console.log('Participante procurado:', participante);
                     console.log('Participantes disponíveis:', participantes);
                     
-                    // Adicionar participante manualmente à lista
                     participantes.push({
                         id: participante.id,
                         nome: participante.nome,
@@ -1680,13 +1474,10 @@
                 console.log('✅ Participante encontrado/adicionado na lista:', participanteNaLista || participante);
                 console.log('🎁 Prêmio a ser mostrado:', premio);
 
-                // Forçar o prêmio na fila (colocar no início)
                 const premioNaFila = filaPremios.find(p => p.id === premio.id || p.nome === premio.nome);
 
                 if (premioNaFila) {
-                    // Remove o prêmio da posição atual
                     filaPremios = filaPremios.filter(p => p.id !== premio.id && p.nome !== premio.nome);
-                    // Adiciona no início
                     filaPremios.unshift(premioNaFila);
                     salvarFilaNoStorage();
                     atualizarListaPremios();
@@ -1704,10 +1495,8 @@
                     console.log('✅ Prêmio adicionado manualmente no início da fila');
                 }
 
-                // Aguardar 1 segundo para visualizar a atualização
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // INICIAR O SORTEIO
                 console.log('🎬 Iniciando animação da roleta...');
                 await girarRoletaComResultado(participanteNaLista || participante, premioNaFila || premio);
             }
@@ -1715,7 +1504,6 @@
 
         console.log('✅ Listener de sorteio automático configurado e pronto');
 
-                // Nova função: girar roleta com resultado pré-determinado
         async function girarRoletaComResultado(vencedor, premio) {
             if (girando) {
                 console.log('⚠️ Roleta já está girando');
@@ -1726,14 +1514,12 @@
             console.log('  Vencedor:', vencedor);
             console.log('  Prêmio:', premio);
 
-            // Garantir que a logo está visível
             document.getElementById('logoRoleta').style.display = 'block';
             document.getElementById('mensagemAguardando').style.display = 'none';
 
             girando = true;
             document.getElementById('resultado').classList.remove('ativo');
 
-            // Encontrar o índice do vencedor na lista de participantes
             const indiceVencedor = participantes.findIndex(p => 
                 p.id === vencedor.id || p.email === vencedor.email || p.nome === vencedor.nome
             );
@@ -1748,30 +1534,18 @@
 
             console.log(`✅ Vencedor encontrado no índice ${indiceVencedor}`);
 
-            // Calcular ângulo final para parar no vencedor
-            // Calcular ângulo final (ganhador deve parar NO TOPO - onde está a seta)
             const sliceAngle = (Math.PI * 2) / participantes.length;
-                    
-            // Ângulo do vencedor em relação à posição inicial
             const anguloVencedor = sliceAngle * indiceVencedor + sliceAngle / 2;
-                    
-            // A seta está no topo (ângulo = -PI/2 ou 270 graus)
-            // Para o vencedor ficar no topo, precisamos girar até que ele fique em -PI/2
             const anguloSeta = -Math.PI / 2;
-                    
-            // Calcular quanto a roleta precisa girar para alinhar o vencedor com a seta
-            const rotacoesCompletas = Math.PI * 2 * 5; // 5 voltas completas
+            const rotacoesCompletas = Math.PI * 2 * 5;
             const anguloFinal = rotacoesCompletas - anguloVencedor + anguloSeta;
 
-            // Animação de rotação
-            const duracao = 5000; // 5 segundos
+            const duracao = 5000;
             const inicio = Date.now();
 
             function animar() {
                 const agora = Date.now();
                 const progresso = Math.min((agora - inicio) / duracao, 1);
-
-                // Easing (desaceleração suave)
                 const easeOut = 1 - Math.pow(1 - progresso, 3);
 
                 anguloAtual = anguloFinal * easeOut;
@@ -1780,7 +1554,6 @@
                 if (progresso < 1) {
                     requestAnimationFrame(animar);
                 } else {
-                    // Animação concluída, mostrar resultado
                     console.log('🎉 Animação concluída!');
                     mostrarResultado(vencedor, premio);
                 }
@@ -1789,11 +1562,6 @@
             animar();
         }
 
-        // ============================================
-        // AJUSTE AUTOMÁTICO PARA NOMES LONGOS
-        // ============================================
-
-        // Observar quando o resultado for exibido
         const observadorResultado = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.target.classList && mutation.target.classList.contains('resultado')) {
@@ -1805,7 +1573,6 @@
                         
                         console.log('📏 Nome do ganhador tem', comprimento, 'caracteres');
                         
-                        // Se o nome for extremamente longo (mais de 30 caracteres)
                         if (comprimento > 15) {
                             ganhadorElemento.classList.add('nome-extra-longo');
                             console.log('✅ Classe "nome-extra-longo" adicionada');
@@ -1817,7 +1584,6 @@
             });
         });
 
-        // Iniciar observação quando a página carregar
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 const resultadoDiv = document.getElementById('resultado');
@@ -1838,9 +1604,7 @@
                 });
                 console.log('👁️ Observador de resultado configurado');
             }
-        }       
-        
+        }
     </script>
-    
 </body>
 </html>
