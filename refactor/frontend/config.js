@@ -47,34 +47,36 @@
     return endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   };
 
-  CONFIG.fetch = async function request(endpoint, options = {}) {
-    const resolvedEndpoint = typeof endpoint === 'function' ? endpoint() : endpoint;
-    const url = CONFIG.buildURL(resolvedEndpoint);
-
-    const headers = {
-      Accept: 'application/json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+  async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
       ...(options.headers || {})
-    };
+    },
+    ...options
+  });
 
-    const response = await fetch(url, {
-      credentials: 'include',
-      ...options,
-      headers
-    });
+  let data = null;
 
-    const contentType = response.headers.get('content-type') || '';
-    const payload = contentType.includes('application/json')
-      ? await response.json()
-      : await response.text();
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
 
-    if (!response.ok) {
-      const message = payload && typeof payload === 'object' ? (payload.error || payload.message) : String(payload);
-      throw new Error(message || `Erro HTTP ${response.status}`);
-    }
+  if (!response.ok) {
+    const message =
+      data?.message ||
+      data?.error?.message ||
+      data?.error ||
+      `HTTP ${response.status}`;
 
-    return payload;
-  };
+    console.error('Erro completo da API:', data);
+    throw new Error(message);
+  }
+
+  return data;
+}
 
   global.CONFIG = CONFIG;
 })(window);
