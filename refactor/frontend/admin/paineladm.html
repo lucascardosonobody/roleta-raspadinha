@@ -1471,27 +1471,24 @@ function renderizarParticipantes() {
 
             // Carregar prêmios
             function carregarPremios() {
-                console.log('🔄 Carregando prêmios...');
-                
-                CONFIG.fetch(CONFIG.API.PREMIOS)
-                    .then(data => {
-                        console.log('📦 Prêmios carregados:', data);
-                        premios = data || [];
-                    })
-                    .then(data => {
-                        console.log('📦 Prêmios carregados:', data);
-                        premios = data || [];
-                        renderizarPremios();
-                        atualizarStats();
-                    })
-                    .catch(erro => {
-                        console.error('❌ Erro ao carregar prêmios:', erro);
-                        const tbody = document.querySelector('#premiosTable tbody');
-                        if (tbody) {
-                            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">Erro ao carregar prêmios</td></tr>';
-                        }
-                    });
+            console.log('🔄 Carregando prêmios...');
+            
+            CONFIG.fetch(CONFIG.API.PREMIOS)
+                .then(data => {
+                    console.log('📦 Prêmios carregados:', data);
+                    premios = Array.isArray(data) ? data : (data.premios || []);
+                    renderizarPremios();
+                    atualizarStats();
+                })
+                .catch(erro => {
+                    console.error('❌ Erro ao carregar prêmios:', erro);
+                    const tbody = document.querySelector('#premiosTable tbody');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">Erro ao carregar prêmios</td></tr>';
+                    }
+                });
             }
+            
 
             function renderizarPremios() {
                 console.log('🎨 Renderizando prêmios...', premios);
