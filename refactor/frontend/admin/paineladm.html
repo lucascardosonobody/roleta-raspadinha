@@ -1471,22 +1471,22 @@ function renderizarParticipantes() {
 
             // Carregar prêmios
             function carregarPremios() {
-            console.log('🔄 Carregando prêmios...');
-            
-            CONFIG.fetch(CONFIG.API.PREMIOS)
-                .then(data => {
-                    console.log('📦 Prêmios carregados:', data);
-                    premios = Array.isArray(data) ? data : (data.premios || []);
-                    renderizarPremios();
-                    atualizarStats();
-                })
-                .catch(erro => {
-                    console.error('❌ Erro ao carregar prêmios:', erro);
-                    const tbody = document.querySelector('#premiosTable tbody');
-                    if (tbody) {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">Erro ao carregar prêmios</td></tr>';
-                    }
-                });
+                console.log('🔄 Carregando prêmios...');
+                
+                CONFIG.fetch(CONFIG.API.PREMIOS)
+                    .then(data => {
+                        console.log('📦 Prêmios carregados:', data);
+                        premios = Array.isArray(data) ? data : (data.premios || []);
+                        renderizarPremios();
+                        atualizarStats();
+                    })
+                    .catch(erro => {
+                        console.error('❌ Erro ao carregar prêmios:', erro);
+                        const tbody = document.querySelector('#premiosTable tbody');
+                        if (tbody) {
+                            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">Erro ao carregar prêmios</td></tr>';
+                        }
+                    });
             }
             
 
@@ -2115,12 +2115,10 @@ function renderizarParticipantes() {
                    // Abrir modal de novo sorteiov
         async function abrirModalNovoSorteio() {
             try {
-                // Carregar prêmios ATIVOS da API
                 const response = await fetch(CONFIG.buildURL(CONFIG.API.PREMIOS_ATIVOS));
                 const data = await response.json();
-                const todosPremios = data.premios || [];
+                const todosPremios = Array.isArray(data) ? data : (data.premios || []);
                 
-                // ⭐ FILTRAR apenas prêmios de ROLETA (tipo = 'roleta' ou 'ambos')
                 premiosDisponiveis = todosPremios.filter(p => 
                     p.tipo === 'roleta' || p.tipo === 'ambos'
                 );
@@ -2132,23 +2130,19 @@ function renderizarParticipantes() {
                     return;
                 }
                 
-                // Mostrar prêmios disponíveis no card informativo
                 const div = document.getElementById('premiosDisponiveis');
                 div.innerHTML = premiosDisponiveis.map(p => 
                     `<span style="display:inline-block;background:#e3f2fd;color:#1976d2;padding:4px 10px;border-radius:8px;margin:3px;">🎡 ${p.nome}</span>`
                 ).join('');
                 
-                // Limpar formulário
                 document.getElementById('dataSorteio').value = '';
                 document.getElementById('horaInicioSorteio').value = '';
                 document.getElementById('horaFimSorteio').value = '';
                 
-                // Limpar e adicionar primeiro horário
                 document.getElementById('listaHorariosPremios').innerHTML = '';
                 contadorHorarios = 0;
                 adicionarHorarioPremio();
                 
-                // Abrir modal
                 abrirModal('modal-novo-sorteio');
                 
             } catch (error) {
@@ -2363,15 +2357,25 @@ function renderizarParticipantes() {
         }
 
         // Renderizar raspadinhas
-        function renderizarRaspadinhasAgendadas() {
-            const tbody = document.getElementById('tabela-raspadinhas-agendadas');
+        function renderizarSorteiosAgendados() {
+            console.log('🎨 Renderizando sorteios agendados...');
+            console.log('📋 Total de sorteios:', sorteiosAgendados.length);
             
-            if (raspadinhasAgendadas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma raspadinha agendada</td></tr>';
+            const tbody = document.getElementById('tabela-sorteios-agendados');
+            
+            if (!tbody) {
+                console.error('❌ Elemento tabela-sorteios-agendados não encontrado!');
+                return;
+            }
+            
+            if (sorteiosAgendados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum sorteio agendado</td></tr>';
+                console.log('⚠️ Nenhum sorteio para renderizar');
                 return;
             }
             
             const agora = new Date();
+            
             const dataHojeBR = agora.toLocaleString('pt-BR', { 
                 timeZone: 'America/Sao_Paulo',
                 year: 'numeric',
@@ -2386,65 +2390,89 @@ function renderizarParticipantes() {
                 hour12: false 
             });
             
-            tbody.innerHTML = raspadinhasAgendadas.map(r => {
-                const dataObj = new Date(r.data_raspadinha + 'T00:00:00-03:00');
-                const data = dataObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                const premios = JSON.parse(r.premios_distribuicao || '[]');
+            console.log('📅 Data/Hora atual (BR):', { dataHojeBR, horaAtualBR });
+            
+            const html = sorteiosAgendados.map((s, index) => {
+                console.log(`  Sorteio #${index + 1}:`, s);
                 
-                const raspadinhaDataISO = r.data_raspadinha;
+                const dataSorteioObj = new Date(s.data_sorteio + 'T00:00:00-03:00');
+                const data = dataSorteioObj.toLocaleDateString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                
+                const premios = Array.isArray(s.prize_schedules) ? s.prize_schedules : [];
+                
+                const sorteioDataISO = s.data_sorteio;
                 const estaNoHorario = (
-                    raspadinhaDataISO === dataHojeBR && 
-                    horaAtualBR >= r.hora_inicio && 
-                    horaAtualBR <= r.hora_fim
+                    sorteioDataISO === dataHojeBR && 
+                    horaAtualBR >= s.hora_inicio && 
+                    horaAtualBR <= s.hora_fim
                 );
                 
+                console.log(`    📊 Sorteio ${s.id}:`, {
+                    data_sorteio: sorteioDataISO,
+                    data_hoje: dataHojeBR,
+                    hora_inicio: s.hora_inicio,
+                    hora_fim: s.hora_fim,
+                    hora_atual: horaAtualBR,
+                    esta_no_horario: estaNoHorario
+                });
+                
                 let statusHTML = '';
-                if (r.status === 'pendente') {
+                if (s.status === 'pendente') {
                     if (estaNoHorario) {
-                        statusHTML = '<span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">🔵 ATIVA AGORA</span>';
+                        statusHTML = '<span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">🔵 ATIVO AGORA</span>';
                     } else {
                         statusHTML = '<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">⏳ Pendente</span>';
                     }
-                } else if (r.status === 'ativo') {
-                    statusHTML = '<span style="background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">🔵 Ativo</span>';
-                } else if (r.status === 'realizado') {
-                    statusHTML = '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">✅ Realizado</span>';
+                } else if (s.status === 'executado') {
+                    statusHTML = '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">✅ Executado</span>';
                 } else {
                     statusHTML = '<span style="background:#fee2e2;color:#991b1b;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">❌ Cancelado</span>';
                 }
                 
                 let premiosHTML;
-                if (estaNoHorario) {
+                if (estaNoHorario && premios.length > 0) {
                     const premiosAtivos = premios.filter(p => {
                         return p.horario_inicio <= horaAtualBR && p.horario_fim >= horaAtualBR;
                     });
                     
                     if (premiosAtivos.length > 0) {
                         premiosHTML = premiosAtivos.map(p => 
-                            `<div style="margin:2px 0;">🎁 <strong>${p.premio_nome}</strong> <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:8px;font-size:11px;">🔵 ATIVO</span></div>`
-                        ).join('');
+                            `🎁 <strong>${p.premio_nome}</strong> <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:8px;font-size:11px;">🔵 ATIVO</span>`
+                        ).join('<br>');
                     } else {
                         premiosHTML = '<span style="color:#f59e0b;">⚠️ Nenhum prêmio ativo neste horário</span>';
                     }
-                } else {
+                } else if (premios.length > 0) {
                     premiosHTML = premios.map(p => 
-                        `<div style="margin:2px 0;">🎁 ${p.premio_nome} (${p.horario_inicio}-${p.horario_fim})</div>`
-                    ).join('');
+                        `🎁 ${p.premio_nome}`
+                    ).join('<br>');
+                } else {
+                    premiosHTML = '<span style="color:#999;">Nenhum prêmio configurado</span>';
                 }
+                
+                const horariosHTML = premios.length > 0 
+                    ? premios.map(p => `⏰ ${p.horario_inicio} - ${p.horario_fim}`).join('<br>')
+                    : '-';
                 
                 return `
                     <tr style="${estaNoHorario ? 'background:#f0f9ff;border-left:4px solid #1e40af;' : ''}">
-                        <td>#${r.id}</td>
-                        <td>📅 ${data}</td>
+                        <td>#${s.id}</td>
                         <td>
-                            🕐 ${r.hora_inicio} até ${r.hora_fim}
+                            📅 ${data}<br>
+                            🕐 ${s.hora_inicio} até ${s.hora_fim}
                             ${estaNoHorario ? '<br><span style="color:#1e40af;font-weight:700;font-size:13px;">🔵 EM ANDAMENTO</span>' : ''}
                         </td>
                         <td>${premiosHTML}</td>
+                        <td>${horariosHTML}</td>
                         <td>${statusHTML}</td>
                         <td>
-                            ${r.status === 'pendente' || r.status === 'ativo' ? `
-                                <button class="btn btn-danger btn-small" onclick="cancelarRaspadinha(${r.id})">
+                            ${s.status === 'pendente' ? `
+                                <button class="btn btn-danger btn-small" onclick="cancelarSorteio(${s.id})">
                                     🗑️ Cancelar
                                 </button>
                             ` : ''}
@@ -2452,17 +2480,18 @@ function renderizarParticipantes() {
                     </tr>
                 `;
             }).join('');
+            
+            tbody.innerHTML = html;
+            console.log('✅ Sorteios renderizados com sucesso!');
         }
 
         // Abrir modal de nova raspadinha
         async function abrirModalNovaRaspadinha() {
             try {
-                // Carregar prêmios de RASPADINHA (tipo = 'raspadinha' ou 'ambos')
                 const response = await fetch(CONFIG.buildURL(CONFIG.API.PREMIOS_ATIVOS));
                 const data = await response.json();
-                const todosPremios = data.premios || [];
+                const todosPremios = Array.isArray(data) ? data : (data.premios || []);
                 
-                // Filtrar apenas prêmios de raspadinha
                 premiosRaspadinha = todosPremios.filter(p => 
                     p.tipo === 'raspadinha' || p.tipo === 'ambos'
                 );
@@ -2474,23 +2503,19 @@ function renderizarParticipantes() {
                     return;
                 }
                 
-                // Mostrar prêmios disponíveis
                 const div = document.getElementById('premiosDisponiveisRaspadinha');
                 div.innerHTML = premiosRaspadinha.map(p => 
                     `<span style="display:inline-block;background:#fff3e0;color:#f57c00;padding:4px 10px;border-radius:8px;margin:3px;">🎰 ${p.nome}</span>`
                 ).join('');
                 
-                // Limpar formulário
                 document.getElementById('dataRaspadinha').value = '';
                 document.getElementById('horaInicioRaspadinha').value = '';
                 document.getElementById('horaFimRaspadinha').value = '';
                 
-                // Limpar e adicionar primeiro horário
                 document.getElementById('listaHorariosPremiosRaspadinha').innerHTML = '';
                 contadorHorariosRaspadinha = 0;
                 adicionarHorarioPremioRaspadinha();
                 
-                // Abrir modal
                 abrirModal('modal-nova-raspadinha');
                 
             } catch (error) {
@@ -2542,45 +2567,58 @@ function renderizarParticipantes() {
         }
 
         // Salvar raspadinha agendada
-        async function salvarRaspadinhaAgendada(event) {
+        async function salvarSorteioAgendado(event) {
             event.preventDefault();
             
-            const dataRaspadinha = document.getElementById('dataRaspadinha').value;
-            const horaInicioRaspadinha = document.getElementById('horaInicioRaspadinha').value;
-            const horaFimRaspadinha = document.getElementById('horaFimRaspadinha').value;
+            console.log('💾 Iniciando salvamento de sorteio...');
             
-            if (!dataRaspadinha || !horaInicioRaspadinha || !horaFimRaspadinha) {
-                alert('❌ Preencha data, hora de início e hora de fim!');
+            const dataSorteio = document.getElementById('dataSorteio').value;
+            const horaInicioSorteio = document.getElementById('horaInicioSorteio').value;
+            const horaFimSorteio = document.getElementById('horaFimSorteio').value;
+            
+            console.log('📅 Dados do sorteio:', { dataSorteio, horaInicioSorteio, horaFimSorteio });
+            
+            if (!dataSorteio || !horaInicioSorteio || !horaFimSorteio) {
+                alert('❌ Preencha data, hora de início e hora de fim do sorteio!');
                 return;
             }
             
-            if (horaFimRaspadinha <= horaInicioRaspadinha) {
+            if (horaFimSorteio <= horaInicioSorteio) {
                 alert('❌ A hora de fim deve ser maior que a hora de início!');
                 return;
             }
             
-            // Coletar horários
             const premiosDistribuicao = [];
-            const container = document.getElementById('listaHorariosPremiosRaspadinha');
-            const horarios = container.querySelectorAll('[id^="horarioRaspadinha-"]');
+            const container = document.getElementById('listaHorariosPremios');
+            const horarios = container.querySelectorAll('[id^="horario-"]');
+            
+            console.log('🔍 Total de horários encontrados:', horarios.length);
             
             for (const horario of horarios) {
                 const id = horario.id.split('-')[1];
-                const horaInicio = document.getElementById(`horaInicioRaspadinha-${id}`)?.value;
-                const horaFim = document.getElementById(`horaFimRaspadinha-${id}`)?.value;
-                const premioId = document.getElementById(`premioRaspadinha-${id}`)?.value;
+                const horaInicio = document.getElementById(`horaInicio-${id}`)?.value;
+                const horaFim = document.getElementById(`horaFim-${id}`)?.value;
+                const premioId = document.getElementById(`premio-${id}`)?.value;
+                
+                console.log(`  Horário #${id}:`, { horaInicio, horaFim, premioId });
                 
                 if (!horaInicio || !horaFim || !premioId) {
-                    alert('❌ Preencha todos os campos!');
+                    alert('❌ Preencha todos os campos dos horários de prêmios!');
+                    return;
+                }
+
+                if (horaInicio < horaInicioSorteio || horaFim > horaFimSorteio) {
+                    alert(`❌ Os horários dos prêmios devem estar entre ${horaInicioSorteio} e ${horaFimSorteio}!`);
                     return;
                 }
                 
-                if (horaInicio < horaInicioRaspadinha || horaFim > horaFimRaspadinha) {
-                    alert(`❌ Os horários dos prêmios devem estar entre ${horaInicioRaspadinha} e ${horaFimRaspadinha}!`);
+                const premio = premiosDisponiveis.find(p => p.id == premioId);
+                
+                if (!premio) {
+                    alert(`❌ Prêmio não encontrado: ID ${premioId}`);
                     return;
                 }
                 
-                const premio = premiosRaspadinha.find(p => p.id == premioId);
                 premiosDistribuicao.push({
                     horario_inicio: horaInicio,
                     horario_fim: horaFim,
@@ -2590,33 +2628,48 @@ function renderizarParticipantes() {
             }
             
             if (premiosDistribuicao.length === 0) {
-                alert('❌ Adicione pelo menos um horário!');
+                alert('❌ Adicione pelo menos um horário de prêmio!');
                 return;
             }
             
+            console.log('📦 Prêmios a enviar:', premiosDistribuicao);
+            
             try {
-                const response = await fetch(CONFIG.buildURL(CONFIG.API.RASPADINHAS_AGENDADAS), {
+                const payload = {
+                    data_sorteio: dataSorteio,
+                    hora_inicio: horaInicioSorteio,
+                    hora_fim: horaFimSorteio,
+                    horarios: premiosDistribuicao
+                };
+                
+                console.log('📤 Enviando para API:', payload);
+                
+                const response = await fetch(CONFIG.buildURL(CONFIG.API.SORTEIOS_AGENDADOS), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        data_raspadinha: dataRaspadinha,
-                        hora_inicio: horaInicioRaspadinha,
-                        hora_fim: horaFimRaspadinha,
-                        premios_distribuicao: premiosDistribuicao
-                    })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 });
                 
-                if (response.ok) {
-                    alert('✅ Raspadinha agendada com sucesso!');
-                    fecharModal('modal-nova-raspadinha');
-                    await carregarRaspadinhasAgendadas();
-                } else {
-                    const erro = await response.json();
-                    alert('❌ Erro: ' + (erro.erro || 'Erro ao agendar raspadinha'));
+                console.log('📡 Status da resposta:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.erro || 'Erro ao agendar sorteio');
                 }
+                
+                const data = await response.json();
+                console.log('✅ Resposta da API:', data);
+                
+                alert('✅ Sorteio agendado com sucesso!');
+                fecharModal('modal-novo-sorteio');
+                await carregarSorteiosAgendados();
+                
             } catch (error) {
-                console.error('Erro:', error);
-                alert('❌ Erro ao salvar raspadinha');
+                console.error('❌ Erro completo:', error);
+                alert('❌ Erro ao salvar sorteio: ' + error.message);
             }
         }
 
