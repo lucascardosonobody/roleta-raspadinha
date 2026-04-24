@@ -477,7 +477,7 @@ app.post('/api/executar-sorteio-automatico', async (req, res) => {
   try {
     const { participante_id, premio_id } = req.body;
     req.body.tipo_sorteio = 'roleta';
-    return app._router.handle({ ...req, url: '/api/registrar-sorteio', method: 'POST', body: { participante_id, premio_id, tipo_sorteio: 'roleta' } }, res, () => null);
+    return app._router.handle({ ...req, url: '/api/sorteios-agendados', method: 'POST', body: { participante_id, premio_id, tipo_sorteio: 'roleta' } }, res, () => null);
   } catch (error) {
     return badRequest(res, error);
   }
