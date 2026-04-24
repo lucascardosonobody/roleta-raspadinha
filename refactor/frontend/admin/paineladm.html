@@ -1218,7 +1218,7 @@ ARQUIVO 3: admin.html - Painel Administrativo Completo
                                 console.log('♾️  Modo infinito ativo - continuará após este sorteio');
                                 
                                 // Enviar comando de sorteio
-                                const comandoResponse = await fetch(CONFIG.buildURL(CONFIG.API.ENVIAR_COMANDO), {
+                                const comandoResponse = await fetch(CONFIG.buildURL(CONFIG.API.ENVIAR-COMANDO), {
                                     method: 'POST', 
                                     headers: { 
                                         'Content-Type': 'application/json',
